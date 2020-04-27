@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'models/auth.dart';
-import 'models/storage.dart';
+import 'providers/auth.dart';
+import 'providers/storage.dart';
 import 'widgets/login.dart';
 import 'widgets/home.dart';
 
@@ -54,7 +54,15 @@ class ShowPage extends StatelessWidget {
               else
                 return LoginPage();
             } else {
-              return CircularProgressIndicator();
+              return Scaffold(
+                body: Center(
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              );
             }
           },
         );

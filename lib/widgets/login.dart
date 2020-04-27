@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:syncapod/models/auth.dart';
-import 'package:syncapod/models/storage.dart';
+import 'package:syncapod/providers/auth.dart';
+import 'package:syncapod/providers/storage.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController userController = TextEditingController();
@@ -30,6 +30,7 @@ class LoginPage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   loginText(),
+                  loginError(context),
                   loginEmail(),
                   loginPassword(),
                   loginButton(
@@ -64,6 +65,18 @@ class LoginPage extends StatelessWidget {
           ),
         ),
       );
+
+  Widget loginError(BuildContext context) {
+    final auth = Provider.of<Auth>(context, listen: false);
+    if (auth.wrongPassword)
+      return Container(
+        child: Text(
+          'Wrong Password',
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    return Container();
+  }
 
   Widget loginEmail() => Container(
         constraints: BoxConstraints(maxWidth: 300.0),
