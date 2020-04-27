@@ -1,0 +1,22 @@
+name: syncapod
+description: A new Flutter project.
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.1.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^1.0.0
+  cupertino_icons: ^0.1.2
+  provider: ^4.0.5
+  flutter_secure_storage: ^3.3.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
