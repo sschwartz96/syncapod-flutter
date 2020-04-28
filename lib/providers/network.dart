@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 
-class Network {
+class NetworkProvider {
   static Future<http.Response> postJSON(
       String url, String token, dynamic body) async {
     var encodedToken = '';

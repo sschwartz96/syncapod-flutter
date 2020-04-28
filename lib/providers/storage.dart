@@ -1,13 +1,13 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class Storage {
+class StorageProvider {
   static const key_access_token = 'access_token';
   static const key_username = 'username';
   static const key_email = 'email';
 
   FlutterSecureStorage _storage;
 
-  Storage() {
+  StorageProvider() {
     // instantiate our storage
     _storage = FlutterSecureStorage();
   }

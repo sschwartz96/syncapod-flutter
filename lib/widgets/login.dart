@@ -32,7 +32,7 @@ class LoginPage extends StatelessWidget {
                   loginText(),
                   loginError(context),
                   loginEmail(),
-                  loginPassword(),
+                  loginPassword(context),
                   loginButton(
                     context,
                     'LOGIN',
@@ -67,7 +67,7 @@ class LoginPage extends StatelessWidget {
       );
 
   Widget loginError(BuildContext context) {
-    final auth = Provider.of<Auth>(context, listen: false);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
     if (auth.wrongPassword)
       return Container(
         child: Text(
@@ -97,14 +97,16 @@ class LoginPage extends StatelessWidget {
         ),
       );
 
-  Widget loginPassword() => Container(
+  Widget loginPassword(BuildContext context) => Container(
         constraints: BoxConstraints(maxWidth: 300.0),
         margin: EdgeInsets.only(bottom: 40),
         child: TextFormField(
           controller: passController,
           focusNode: focusPassword,
           onFieldSubmitted: (String s) {
-            // TODO: submit login
+            var storage = Provider.of<StorageProvider>(context, listen: false);
+            Provider.of<AuthProvider>(context, listen: false).authenticate(
+                storage, userController.text, passController.text);
           },
           obscureText: true,
           decoration: InputDecoration(
@@ -123,9 +125,8 @@ class LoginPage extends StatelessWidget {
         color: backColor,
         child: (FlatButton(
           onPressed: () {
-            // TODO: add login function
-            var storage = Provider.of<Storage>(context, listen: false);
-            Provider.of<Auth>(context, listen: false).authenticate(
+            var storage = Provider.of<StorageProvider>(context, listen: false);
+            Provider.of<AuthProvider>(context, listen: false).authenticate(
                 storage, userController.text, passController.text);
           },
           child: Text(
