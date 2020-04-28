@@ -12,12 +12,12 @@ class Storage {
     _storage = FlutterSecureStorage();
   }
 
-  void insert(String key, dynamic object) async {
+  Future<void> insert(String key, dynamic object) async {
     print('inserting key: $key with value $object');
     return await _storage.write(key: key, value: object);
   }
 
-  void delete(String key) async => await _storage.delete(key: key);
+  Future<void> delete(String key) async => await _storage.delete(key: key);
 
   dynamic read(String key) async => await _storage.read(key: key);
 }

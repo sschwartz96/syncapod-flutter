@@ -51,8 +51,13 @@ class Auth extends ChangeNotifier {
   }
 
   void logout(Storage storage) async {
-    // TODO: add remove token from online database
-    storage.delete(Storage.key_access_token);
+    final token = await storage.read(Storage.key_access_token);
+    final url = _baseURL + "logout/";
+    print("sending token $token off to delete");
+    final response = await Network.postJSON(url, token, '');
+    print("logout response: ${response.body}");
+
+    await storage.delete(Storage.key_access_token);
     storage.delete(Storage.key_username);
     storage.delete(Storage.key_email);
     notifyListeners();
