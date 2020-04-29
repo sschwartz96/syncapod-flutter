@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:syncapod/models/subscription.dart';
+import 'package:syncapod/models/podcast.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   static Future<Widget> subscriptions(BuildContext context) async {
-    return FutureBuilder<List<Subscription>>(
+    return FutureBuilder<List<Podcast>>(
       future: getSubs(context),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting)
@@ -98,35 +98,80 @@ class _HomePageState extends State<HomePage> {
             : ListView.builder(
                 itemCount: snapshot.data.length,
                 itemBuilder: (context, index) {
-                  print('snapshot data: ${snapshot.data[index].podcast.title}');
-                  return ListTile(
-                    title: Row(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Image.network(
-                            snapshot.data[index].podcast.image.url,
-                            width: 50,
-                            height: 50,
-                          ),
-                        ),
-                        Container(
-                            margin: const EdgeInsets.only(left: 8.0),
-                            child:
-                                Text('${snapshot.data[index].podcast.title}')),
-                      ],
-                    ),
-                  );
+                  return podcastTile(snapshot.data[index]);
                 },
               );
       },
     );
   }
 
-  static Future<List<Subscription>> getSubs(BuildContext context) async {
+  static Widget podcastTile(Podcast p) {
+    return GestureDetector(
+      onTap: () => {
+        // TODO: get episodes
+      },
+      child: Container(
+        margin: EdgeInsets.all(12),
+        height: 100,
+        child: Row(
+          children: <Widget>[
+            Image.network(
+              p.image.url,
+              width: 100,
+              height: 100,
+              loadingBuilder: (context, child, p) {
+                return p == null
+                    ? child
+                    : Container(
+                        width: 100,
+                        height: 100,
+                        child: CircularProgressIndicator(
+                          value: p.cumulativeBytesLoaded / p.expectedTotalBytes,
+                        ),
+                      );
+              },
+            ),
+            Flexible(
+              child: Container(
+                margin: EdgeInsets.only(left: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      p.title,
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text(
+                      p.subtitle,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey,
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Future<List<Podcast>> getSubs(BuildContext context) async {
     final token = await Provider.of<StorageProvider>(context, listen: false)
         .read(StorageProvider.key_access_token);
     return await Provider.of<PodcastProvider>(context, listen: false)
         .getSubscriptions(token);
+  }
+
+  static Future<List<Episode>> getEpisodes(
+      BuildContext context, String podID) async {
+    final token = await Provider.of<StorageProvider>(context, listen: false)
+        .read(StorageProvider.key_access_token);
+    return await Provider.of<PodcastProvider>(context, listen: false)
+        .getEpisodes(token, podID);
   }
 }

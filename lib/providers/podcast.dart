@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:syncapod/models/subscription.dart';
+import 'package:syncapod/models/podcast.dart';
 
 import 'dart:convert' as json;
 import 'network.dart';
@@ -7,13 +7,19 @@ import 'network.dart';
 class PodcastProvider extends ChangeNotifier {
   final String _baseURL = "https://syncapod.com/api/podcast/";
 
-  Future<List<Subscription>> getSubscriptions(String token) async {
+  Future<List<Podcast>> getSubscriptions(String token) async {
     final url = _baseURL + "subscriptions/get";
     final response = await NetworkProvider.postJSON(url, token, '');
-    var subs = (json.jsonDecode(response.body) as List)
-        .map((e) => Subscription.fromMap(e))
+    return (json.jsonDecode(response.body) as List)
+        .map((e) => Podcast.fromMap(e))
         .toList();
+  }
 
-    return subs;
+  Future<List<Episode>> getEpisodes(String token, String podID) async {
+    final url = _baseURL + "episodes/get/" + podID;
+    final response = await NetworkProvider.postJSON(url, token, '');
+    return (json.jsonDecode(response.body) as List)
+        .map((e) => Episode.fromMap(e))
+        .toList();
   }
 }
