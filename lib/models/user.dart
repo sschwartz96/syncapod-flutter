@@ -1,15 +1,20 @@
 import 'dart:convert';
 
+import 'package:syncapod/models/podcast.dart';
+
 class User {
   final String id;
   final String email;
   final String username;
   final DateTime dob;
+  final List<Podcast> subs;
+
   User({
     this.id,
     this.email,
     this.username,
     this.dob,
+    this.subs,
   });
 
   Map<String, dynamic> toMap() {
@@ -17,7 +22,8 @@ class User {
       'id': id,
       'email': email,
       'username': username,
-      'dob': dob.toIso8601String(),
+      'dob': dob?.toIso8601String(),
+      'subs': subs?.map((x) => x?.toMap())?.toList(),
     };
   }
 
@@ -29,6 +35,7 @@ class User {
       email: map['email'],
       username: map['username'],
       dob: DateTime.parse(map['dob']),
+      subs: List<Podcast>.from(map['subs']?.map((x) => Podcast.fromMap(x))),
     );
   }
 

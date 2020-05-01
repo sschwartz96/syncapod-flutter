@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncapod/models/podcast.dart';
+import 'package:syncapod/pages/episodes.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
+import 'package:syncapod/providers/user.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -86,29 +88,21 @@ class _HomePageState extends State<HomePage> {
     return Container(child: Text('$username'));
   }
 
-  static Future<Widget> subscriptions(BuildContext context) async {
-    return FutureBuilder<List<Podcast>>(
-      future: getSubs(context),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
-          return Center(child: CircularProgressIndicator());
-
-        return snapshot.data == null
-            ? Text('no subs')
-            : ListView.builder(
-                itemCount: snapshot.data.length,
-                itemBuilder: (context, index) {
-                  return podcastTile(snapshot.data[index]);
-                },
-              );
-      },
-    );
+  static Future<Widget> subscriptions(BuildContext context) {
+    List<Podcast> subs = getSubs(context);
+    return Future.value(subs == null || subs.length == 0
+        ? Text('no subs')
+        : ListView.builder(
+            itemCount: subs.length,
+            itemBuilder: (context, index) => podcastTile(subs[index], context),
+          ));
   }
 
-  static Widget podcastTile(Podcast p) {
+  static Widget podcastTile(Podcast p, BuildContext context) {
     return GestureDetector(
       onTap: () => {
-        // TODO: get episodes
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => EpisodesPage()))
       },
       child: Container(
         margin: EdgeInsets.all(12),
@@ -160,11 +154,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  static Future<List<Podcast>> getSubs(BuildContext context) async {
-    final token = await Provider.of<StorageProvider>(context, listen: false)
-        .read(StorageProvider.key_access_token);
-    return await Provider.of<PodcastProvider>(context, listen: false)
-        .getSubscriptions(token);
+  static List<Podcast> getSubs(BuildContext context) {
+    return Provider.of<UserProvider>(context, listen: false).getUserSubs();
   }
 
   static Future<List<Episode>> getEpisodes(

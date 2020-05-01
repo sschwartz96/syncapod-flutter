@@ -1,5 +1,6 @@
 import 'dart:convert' as json;
 import 'package:flutter/material.dart';
+import 'package:syncapod/models/user.dart';
 import 'network.dart';
 import 'storage.dart';
 
@@ -7,13 +8,13 @@ class AuthProvider extends ChangeNotifier {
   static const _baseURL = "https://syncapod.com/api/auth/";
   bool wrongPassword = false;
 
-  Future<bool> isAuthorized(StorageProvider storage) async {
+  Future<User> isAuthorized(StorageProvider storage) async {
     // get access token
     final token = await storage.read(StorageProvider.key_access_token);
     final username = await storage.read(StorageProvider.key_username);
     if (token == null) {
       print('no token');
-      return false;
+      return null;
     }
     // send off to server and return value
     final url = _baseURL + 'authorize/';
@@ -21,11 +22,12 @@ class AuthProvider extends ChangeNotifier {
     final response = await NetworkProvider.postJSON(url, token, reqBody);
     final resBody = json.jsonDecode(response.body);
 
-    if (resBody['valid'] && resBody['user']['username'] == username) {
-      return true;
+    if (!resBody['valid'] || resBody['user']['username'] != username) {
+      print('this should never happen, token doesn\'t match saved username');
+      return null;
     }
 
-    return false;
+    return User.fromMap(resBody['user']);
   }
 
   Future<bool> authenticate(

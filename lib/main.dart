@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'models/user.dart';
+import 'providers/user.dart';
 import 'providers/auth.dart';
 import 'providers/podcast.dart';
 import 'providers/storage.dart';
@@ -15,6 +17,9 @@ class Syncapod extends StatelessWidget {
       providers: [
         Provider<StorageProvider>(
           create: (context) => StorageProvider(),
+        ),
+        Provider<UserProvider>(
+          create: (context) => UserProvider(),
         ),
         ChangeNotifierProvider<AuthProvider>(
           create: (context) => AuthProvider(),
@@ -44,20 +49,31 @@ class Syncapod extends StatelessWidget {
 class ShowPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Setup consumer to be notified when auth status changes
     return Consumer<AuthProvider>(
       builder: (context, auth, child) {
+        // grab our storage to save and read data
         final storage = Provider.of<StorageProvider>(context, listen: false);
-        return FutureBuilder<bool>(
+        // future builder is needed to check authorization status
+        return FutureBuilder<User>(
+          // future checks if we have a token and authorizes it with the server
           future: Provider.of<AuthProvider>(context, listen: false)
               .isAuthorized(storage),
-          builder: (context, AsyncSnapshot<bool> snapshot) {
+          // builder is where we return our widget
+          builder: (context, AsyncSnapshot<User> snapshot) {
+            // if the app is still checking auth status
             if (snapshot.connectionState == ConnectionState.done) {
-              // expecting true or false to isAuthorized()
-              if (snapshot.data)
+              // our snapshot.data is true or false from isAuthorized()
+              if (snapshot.data != null) {
+                // make sure our UserProvider gets our user info
+                Provider.of<UserProvider>(context, listen: false)
+                    .setUser(snapshot.data);
                 return HomePage();
-              else
+              } else {
                 return LoginPage();
+              }
             } else {
+              // show circular loading
               return Scaffold(
                 body: Center(
                   child: Container(
