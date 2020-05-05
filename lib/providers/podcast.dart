@@ -16,9 +16,17 @@ class PodcastProvider extends ChangeNotifier {
   //       .toList();
   // }
 
-  Future<List<Episode>> getEpisodes(String token, String podID) async {
+  Future<List<Episode>> getEpisodes(
+      String token, String podID, int start, int end) async {
     final url = _baseURL + "episodes/get/" + podID;
-    final response = await NetworkProvider.postJSON(url, token, '');
+    final Map<String, dynamic> resMap = {
+      "id": podID,
+      "start": start,
+      "end": end
+    };
+    final resJSON = json.jsonEncode(resMap);
+    final response = await NetworkProvider.postJSON(url, token, resJSON);
+
     return (json.jsonDecode(response.body) as List)
         .map((e) => Episode.fromMap(e))
         .toList();

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/pages/home.dart';
+import 'package:syncapod/pages/login.dart';
+import 'package:syncapod/providers/audio.dart';
 import 'models/user.dart';
 import 'providers/user.dart';
 import 'providers/auth.dart';
 import 'providers/podcast.dart';
 import 'providers/storage.dart';
-import 'widgets/login.dart';
-import 'widgets/home.dart';
 
 void main() => runApp(Syncapod());
 
@@ -26,6 +28,9 @@ class Syncapod extends StatelessWidget {
         ),
         ChangeNotifierProvider<PodcastProvider>(
           create: (context) => PodcastProvider(),
+        ),
+        Provider<AudioProvider>(
+          create: (context) => AudioProvider(AudioPlayer()),
         )
       ],
       child: MaterialApp(
@@ -68,7 +73,7 @@ class ShowPage extends StatelessWidget {
                 // make sure our UserProvider gets our user info
                 Provider.of<UserProvider>(context, listen: false)
                     .setUser(snapshot.data);
-                return HomePage();
+                return BottomNav();
               } else {
                 return LoginPage();
               }
