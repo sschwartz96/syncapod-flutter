@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/home.dart';
 import 'package:syncapod/pages/login.dart';
 import 'package:syncapod/providers/audio.dart';
@@ -37,6 +38,8 @@ class Syncapod extends StatelessWidget {
         title: 'syncapod',
         home: ShowPage(),
         theme: ThemeData(
+          // primaryColor: Colors.deepPurple.shade700,
+          // canvasColor: Colors.grey.shade900,
           inputDecorationTheme: InputDecorationTheme(
             border: OutlineInputBorder(),
             focusedBorder: OutlineInputBorder(
