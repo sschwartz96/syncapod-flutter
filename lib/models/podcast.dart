@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:audio_service/audio_service.dart';
+
 class Podcast {
   final String id;
   final String title;
@@ -136,6 +138,11 @@ class Episode {
     };
   }
 
+  String getDescription() {
+    return description.replaceAll(RegExp('<img .*?>'), '');
+    //       .replaceAll(RegExp(r'[^\w\s]+'), '');
+  }
+
   static Episode fromMap(Map<String, dynamic> map) {
     if (map == null) return null;
 
@@ -165,6 +172,20 @@ class Episode {
   String toJson() => json.encode(toMap());
 
   static Episode fromJson(String source) => fromMap(json.decode(source));
+
+  MediaItem toMediaItem() {
+    return MediaItem(
+      title: this.title,
+      id: this.mp3URL,
+      artUri: this.image.url,
+      artist: this.author,
+      displaySubtitle: this.subtitle,
+      displayTitle: this.title,
+      duration: this.durationMillis,
+      playable: true,
+      album: this.title,
+    );
+  }
 }
 
 class PodCategory {

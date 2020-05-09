@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:syncapod/models/podcast.dart';
 
@@ -24,10 +26,11 @@ class PodcastProvider extends ChangeNotifier {
       "start": start,
       "end": end
     };
-    final resJSON = json.jsonEncode(resMap);
-    final response = await NetworkProvider.postJSON(url, token, resJSON);
+    final reqJSON = json.jsonEncode(resMap);
+    final response = await NetworkProvider.postJSON(url, token, reqJSON);
+    final decoded = utf8.decode(response.bodyBytes);
 
-    return (json.jsonDecode(response.body) as List)
+    return (json.jsonDecode(decoded) as List)
         .map((e) => Episode.fromMap(e))
         .toList();
   }

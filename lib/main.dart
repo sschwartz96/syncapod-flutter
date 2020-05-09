@@ -1,10 +1,8 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
-import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/home.dart';
 import 'package:syncapod/pages/login.dart';
-import 'package:syncapod/providers/audio.dart';
 import 'models/user.dart';
 import 'providers/user.dart';
 import 'providers/auth.dart';
@@ -16,37 +14,36 @@ void main() => runApp(Syncapod());
 class Syncapod extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<StorageProvider>(
-          create: (context) => StorageProvider(),
-        ),
-        Provider<UserProvider>(
-          create: (context) => UserProvider(),
-        ),
-        ChangeNotifierProvider<AuthProvider>(
-          create: (context) => AuthProvider(),
-        ),
-        ChangeNotifierProvider<PodcastProvider>(
-          create: (context) => PodcastProvider(),
-        ),
-        Provider<AudioProvider>(
-          create: (context) => AudioProvider(AudioPlayer()),
-        )
-      ],
-      child: MaterialApp(
-        title: 'syncapod',
-        home: ShowPage(),
-        theme: ThemeData(
-          // primaryColor: Colors.deepPurple.shade700,
-          // canvasColor: Colors.grey.shade900,
-          inputDecorationTheme: InputDecorationTheme(
-            border: OutlineInputBorder(),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white),
-            ),
+    return AudioServiceWidget(
+      child: MultiProvider(
+        providers: [
+          Provider<StorageProvider>(
+            create: (context) => StorageProvider(),
           ),
-          cursorColor: Colors.blue.shade900,
+          Provider<UserProvider>(
+            create: (context) => UserProvider(),
+          ),
+          ChangeNotifierProvider<AuthProvider>(
+            create: (context) => AuthProvider(),
+          ),
+          ChangeNotifierProvider<PodcastProvider>(
+            create: (context) => PodcastProvider(),
+          ),
+        ],
+        child: MaterialApp(
+          title: 'syncapod',
+          theme: ThemeData(
+            // primaryColor: Colors.deepPurple.shade700,
+            // canvasColor: Colors.grey.shade900,
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.white),
+              ),
+            ),
+            cursorColor: Colors.blue.shade900,
+          ),
+          home: ShowPage(),
         ),
       ),
     );

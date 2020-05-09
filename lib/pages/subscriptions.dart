@@ -37,7 +37,20 @@ class SubscriptionsTab extends StatelessWidget {
                   appBar: AppBar(
                     title: Text('${p.title}'),
                   ),
-                  body: EpisodesPage(settings.arguments),
+                  body: EpisodesListPage(settings.arguments),
+                ),
+                settings: settings,
+              );
+            case NavSubEpiDetail:
+              final Episode e = settings.arguments;
+              return MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  appBar: AppBar(
+                    title: Text('${e.title}'),
+                  ),
+                  body: EpisodeDetailPage(
+                    episode: e,
+                  ),
                 ),
                 settings: settings,
               );
@@ -64,7 +77,12 @@ class SubscriptionsTab extends StatelessWidget {
       body: Builder(
         builder: (context) {
           return subs == null || subs.length == 0
-              ? Text('no subs')
+              ? Text(
+                  'No Subscriptions',
+                  style: TextStyle(
+                    fontSize: 40,
+                  ),
+                )
               : ListView.builder(
                   itemCount: subs.length,
                   itemBuilder: (context, index) => InkWell(

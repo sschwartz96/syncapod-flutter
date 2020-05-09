@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/constants.dart';
 import 'package:syncapod/models/podcast.dart';
 import 'package:syncapod/pages/now_playing.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class EpisodesPage extends StatelessWidget {
+class EpisodesListPage extends StatelessWidget {
   final Podcast _podcast;
 
-  const EpisodesPage(
+  const EpisodesListPage(
     this._podcast,
   );
 
@@ -28,7 +32,7 @@ class EpisodesPage extends StatelessWidget {
 
   Widget episode(BuildContext context, Episode e) => InkWell(
         onTap: () {
-          // TODO: add episode details page
+          Navigator.of(context).pushNamed(NavSubEpiDetail, arguments: e);
         },
         child: Container(
           padding: EdgeInsets.all(12),
@@ -63,5 +67,81 @@ class EpisodesPage extends StatelessWidget {
         .read(StorageProvider.key_access_token);
     return Provider.of<PodcastProvider>(context, listen: false)
         .getEpisodes(token, _podcast.id, 0, 10);
+  }
+}
+
+class EpisodeDetailPage extends StatelessWidget {
+  EpisodeDetailPage({@required this.episode});
+  final Episode episode;
+  @override
+  Widget build(BuildContext context) {
+    print('epi dets: ${episode.description}');
+    return SingleChildScrollView(
+      child: Center(
+        child: Column(
+          children: <Widget>[
+            // spacer
+            SizedBox(
+              height: 20,
+            ),
+
+            // Episode specific image
+            Image.network(
+              episode.image.url,
+              height: 220,
+              width: 320,
+              alignment: Alignment.center,
+              fit: BoxFit.fitHeight,
+            ),
+
+            // spacer
+            SizedBox(
+              height: 20,
+            ),
+
+            // Episode summary or description
+            Container(
+              padding: EdgeInsets.all(8),
+              child: Html(
+                data: episode.getDescription() ?? episode.summary,
+                defaultTextStyle: TextStyle(fontSize: 16),
+                onLinkTap: (url) async {
+                  bool open = false;
+                  await showDialog<bool>(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        title: Text('Open url?'),
+                        content: Text('$url'),
+                        actions: <Widget>[
+                          FlatButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              return false;
+                            },
+                            child: Text('No'),
+                          ),
+                          FlatButton(
+                            onPressed: () {
+                              open = true;
+                              Navigator.pop(context);
+                              return true;
+                            },
+                            child: Text('Yes'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                  if (open) {
+                    launch(url);
+                  }
+                },
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }
