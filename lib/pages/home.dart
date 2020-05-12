@@ -25,8 +25,8 @@ class _BottomNavState extends State<BottomNav> {
   Widget build(BuildContext context) {
     return Container(
       child: Scaffold(
-        backgroundColor: Colors.blue,
         bottomNavigationBar: BottomNavigationBar(
+          backgroundColor: Colors.deepPurple.withAlpha(50),
           type: BottomNavigationBarType.fixed,
           currentIndex: _currentIndex,
           onTap: _onTabTap,
@@ -84,9 +84,12 @@ class _BottomNavState extends State<BottomNav> {
 
   static Widget _home(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Home'),
+      body: Center(
+        child: Text(
+          'Home',
+          style: TextStyle(fontSize: 40),
         ),
-        body: Text('Home'));
+      ),
+    );
   }
 }

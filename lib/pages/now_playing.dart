@@ -2,10 +2,13 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:palette_generator/palette_generator.dart';
+import 'package:provider/provider.dart';
 
 import 'package:syncapod/bg_audio.dart';
 import 'package:syncapod/constants.dart';
 import 'package:syncapod/models/podcast.dart';
+import 'package:syncapod/providers/podcast.dart';
+import 'package:syncapod/providers/storage.dart';
 import 'package:syncapod/widgets/playback_button.dart';
 import 'package:syncapod/widgets/seek_bar.dart';
 
@@ -20,7 +23,7 @@ class NowPlayingPage extends StatefulWidget {
   _NowPlayingPageState createState() => _NowPlayingPageState(podcast, episode);
 }
 
-enum Status { ToBePlayed, Playing, Paused }
+enum Status { StartingAudio, ToBePlayed, Playing, Paused }
 
 class _NowPlayingPageState extends State<NowPlayingPage> {
   Podcast _podcast;
@@ -36,20 +39,22 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
   @override
   Widget build(BuildContext context) {
-    bool startingService = false;
     // make sure audio service is already started
-    if (!AudioService.running) startingService = true;
-    startAudioService().then((value) {
-      if (value) AudioService.playMediaItem(_episode.toMediaItem());
-      startingService = false;
-    });
+    if (!AudioService.running) {
+      _currentStatus = Status.StartingAudio;
+      startAudioService().then((value) {
+        if (value) {
+          // set the user token within the audio service and then play
+          _setToken(context).then((value) => _playEpisode(context));
+        }
+      });
+    }
 
     // start the background audio service
     // Initiate playback start if we are in such state
-    if (!startingService &&
-        AudioService.running &&
-        _currentStatus == Status.ToBePlayed) {
-      AudioService.playMediaItem(_episode.toMediaItem());
+    if (AudioService.running && _currentStatus == Status.ToBePlayed) {
+      // AudioService.playMediaItem(_episode.toMediaItem());
+      _playEpisode(context);
     }
 
     // Load the image
@@ -163,6 +168,9 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
         final duration = AudioService.currentMediaItem != null
             ? Duration(milliseconds: AudioService.currentMediaItem.duration)
             : Duration.zero;
+
+        _updatePlayIcon(false);
+
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -171,7 +179,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
               child: _curImage,
             ),
             SizedBox(
-              height: 80,
+              height: 50,
             ),
             StreamBuilder<Object>(
                 stream: Stream.periodic(Duration(seconds: 1)),
@@ -216,12 +224,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                 PlaybackButton(
                   icon: playPauseIcon,
                   onPressed: () {
-                    if (AudioService.playbackState.basicState ==
-                        BasicPlaybackState.playing) {
-                      playPauseIcon = Icons.play_arrow;
-                    } else {
-                      playPauseIcon = Icons.pause;
-                    }
+                    _updatePlayIcon(true);
                     // although we say play, its implemented as play/pause
                     AudioService.play();
                   },
@@ -245,10 +248,69 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                   tooltip: 'Fast-Forward 30 Seconds',
                 ),
               ],
-            )
+            ),
+
+            SizedBox(
+              height: 10,
+            ),
+            // playback speed
+            FlatButton(
+              child: Builder(builder: (context) {
+                final speed = fullState != null
+                    ? fullState.speed.toStringAsFixed(1)
+                    : 1.0;
+                return Text(
+                  '${speed}x',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+                );
+              }),
+              onPressed: () {
+                print('press playback speed');
+                AudioService.customAction('speed', -1);
+              },
+            ),
           ],
         );
       },
     );
+  }
+
+  /// _updatePlayIcon gets the AudioService state and changes the icon
+  /// [playButtonPressed] is if this is called from the onPress function
+  void _updatePlayIcon(bool playButtonPressed) {
+    if ((AudioService.playbackState.basicState == BasicPlaybackState.playing)) {
+      if (playButtonPressed)
+        playPauseIcon = Icons.play_arrow;
+      else
+        playPauseIcon = Icons.pause;
+    } else {
+      if (playButtonPressed)
+        playPauseIcon = Icons.pause;
+      else
+        playPauseIcon = Icons.play_arrow;
+    }
+  }
+
+  void _playEpisode(BuildContext context) {
+    // transform episode to [MediaItem]
+    final mediaItem = _episode.toMediaItem();
+
+    // play the media item with the audio service
+    AudioService.playMediaItem(mediaItem);
+
+    // change our status
+    _currentStatus = Status.Playing;
+  }
+
+  Future<void> _setToken(BuildContext context) async {
+    // get the token from our storage provider
+    final token = await Provider.of<StorageProvider>(context, listen: false)
+        .read(StorageProvider.key_access_token);
+
+    // set it within the audio service
+    AudioService.customAction('setToken', token);
   }
 }

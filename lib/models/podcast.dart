@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:syncapod/providers/podcast.dart';
 
 class Podcast {
   final String id;
@@ -184,6 +185,7 @@ class Episode {
       duration: this.durationMillis,
       playable: true,
       album: this.title,
+      extras: {"epi_id": this.id, "pod_id": this.podcastID},
     );
   }
 }

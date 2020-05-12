@@ -1,4 +1,5 @@
 import 'dart:convert' as json;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:syncapod/models/user.dart';
 import 'network.dart';
@@ -6,7 +7,6 @@ import 'storage.dart';
 
 class AuthProvider extends ChangeNotifier {
   static const _baseURL = "https://syncapod.com/api/auth/";
-  bool wrongPassword = false;
 
   Future<User> isAuthorized(StorageProvider storage) async {
     // get access token
@@ -20,7 +20,8 @@ class AuthProvider extends ChangeNotifier {
     final url = _baseURL + 'authorize/';
     final reqBody = json.jsonEncode({"token": token});
     final response = await NetworkProvider.postJSON(url, token, reqBody);
-    final resBody = json.jsonDecode(response.body);
+
+    final resBody = json.jsonDecode(utf8.decode(response.bodyBytes));
 
     if (!resBody['valid'] || resBody['user']['username'] != username) {
       print('this should never happen, token doesn\'t match saved username');
@@ -42,13 +43,11 @@ class AuthProvider extends ChangeNotifier {
       storage.insert(StorageProvider.key_access_token, resBody['access_token']);
       storage.insert(StorageProvider.key_username, resBody['user']['username']);
       storage.insert(StorageProvider.key_email, resBody['user']['email']);
-      wrongPassword = false;
       notifyListeners();
       return true;
     }
 
-    wrongPassword = true;
-    notifyListeners();
+//    notifyListeners();
     return false;
   }
 

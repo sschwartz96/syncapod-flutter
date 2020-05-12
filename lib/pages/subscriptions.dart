@@ -71,9 +71,6 @@ class SubscriptionsTab extends StatelessWidget {
     List<Podcast> subs =
         Provider.of<UserProvider>(context, listen: false).getUserSubs();
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Subscriptions'),
-      ),
       body: Builder(
         builder: (context) {
           return subs == null || subs.length == 0

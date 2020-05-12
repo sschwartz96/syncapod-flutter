@@ -3,16 +3,24 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:syncapod/providers/podcast.dart';
 
 class BackgroundAudio extends BackgroundAudioTask {
+  PodcastProvider _podcastProvider;
+  String _token;
+
   AudioPlayer _player;
   Completer _completer;
+  bool pausedFromSystem;
   final List<MediaItem> _queue = [];
   int _qIndex = -1;
+  List<double> _speedInc = [1.0, 1.2, 1.5, 1.7, 2.0, 0.7];
+  int _speedIndex = 0;
 
   @override
   Future<void> onStart() async {
     print('background on start');
+    _podcastProvider = PodcastProvider();
     _player = AudioPlayer();
     _completer = Completer();
 
@@ -27,6 +35,7 @@ class BackgroundAudio extends BackgroundAudioTask {
         _setState(
           state: state,
           position: _getPosition().inMilliseconds,
+          speed: _getSpeed(),
         );
       }
     });
@@ -36,6 +45,12 @@ class BackgroundAudio extends BackgroundAudioTask {
 
   @override
   void onPlayMediaItem(MediaItem mediaItem) async {
+    // need to first get the latest playback for user
+    print('_token: $_token');
+    final userEpi = await _podcastProvider.getUserEpisode(
+        _token, mediaItem.extras['epi_id'], mediaItem.extras['pod_id']);
+    print('our offset: ${userEpi?.offset}');
+
     Duration duration;
     // set the url, buffer, and play
     if (_isURL(mediaItem.id)) {
@@ -48,7 +63,7 @@ class BackgroundAudio extends BackgroundAudioTask {
       duration = await _player.setFilePath(mediaItem.id);
     }
 
-    // update duration
+    // update duration if necessary
     print('media duration: ${mediaItem.duration}');
     if (mediaItem.duration == null || mediaItem.duration == 0) {
       mediaItem = mediaItem.copyWith(duration: duration.inMilliseconds);
@@ -59,6 +74,10 @@ class BackgroundAudio extends BackgroundAudioTask {
     _queue.add(mediaItem);
     _qIndex++;
 
+    // play and set the offset
+    if (userEpi?.offset != null) {
+      _seek(Duration(milliseconds: userEpi.offset));
+    }
     _player.play();
   }
 
@@ -90,12 +109,21 @@ class BackgroundAudio extends BackgroundAudioTask {
   @override
   Future onCustomAction(String name, arguments) {
     print('custom action called: $name');
+    switch (name) {
+      case 'speed':
+        _nextSpeed(arguments);
+        break;
+      case 'setToken':
+        print('setting token in audio service: $arguments');
+        _token = arguments;
+        break;
+    }
   }
 
   @override
   void onAudioBecomingNoisy() {
     print('headphone jack, or bluetooth device disconnected, pausing');
-    _player.pause();
+    _pause();
   }
 
   @override
@@ -129,7 +157,10 @@ class BackgroundAudio extends BackgroundAudioTask {
   @override
   void onAudioFocusLostTransient() {
     print('onAudioFocusLostTransient()');
-    _player.pause();
+    if (_player.playbackState == AudioPlaybackState.playing) {
+      _player.pause();
+      pausedFromSystem = true;
+    }
   }
 
   @override
@@ -139,13 +170,19 @@ class BackgroundAudio extends BackgroundAudioTask {
 
   @override
   void onAudioFocusLost() {
-    _player.pause();
+    if (_player.playbackState == AudioPlaybackState.playing) {
+      _player.pause();
+      pausedFromSystem = true;
+    }
   }
 
   @override
   void onAudioFocusGained() {
+    if (pausedFromSystem) {
+      _player.play();
+      pausedFromSystem = false;
+    }
     _player.setVolume(100);
-    _player.play();
   }
 
   @override
@@ -159,18 +196,30 @@ class BackgroundAudio extends BackgroundAudioTask {
       ? Duration.zero
       : _player.playbackEvent.position;
 
-  Duration _getDuration() => _player.playbackEvent == null
-      ? Duration.zero
-      : _player.playbackEvent.duration;
+  Duration _getDuration() => (_queue.length > 0)
+      ? Duration(milliseconds: _queue[_qIndex].duration)
+      : (_player.playbackEvent?.duration != null)
+          ? _player.playbackEvent.duration
+          : Duration.zero;
 
   void _playPause() {
     var playbackState = _player.playbackState;
     if (playbackState == AudioPlaybackState.playing) {
-      _player.pause();
+      _pause();
     }
     if (playbackState == AudioPlaybackState.paused) {
       _player.play();
     }
+  }
+
+  /// _pause pauses the audio player and sends an update of offset to the api
+  void _pause() {
+    _player.pause();
+    MediaItem item = _queue[_qIndex];
+    print(
+        'seding update offset with token: $_token, position:${_getPosition()}');
+    _podcastProvider.updateUserEpisodeOffset(_token, item.extras['epi_id'],
+        item.extras['pod_id'], _getPosition().inMilliseconds);
   }
 
   /// _seek seeks to the specified duration
@@ -192,6 +241,20 @@ class BackgroundAudio extends BackgroundAudioTask {
     }
   }
 
+  /// _nextSpeed changes the speed of the audio player to the next in the list
+  /// [i] should be set to -1 if the index is not specified
+  void _nextSpeed(int i) {
+    if (i != -1)
+      _speedIndex = i;
+    else
+      _speedIndex++;
+
+    // normalize to prevent index overflow
+    _speedIndex = _speedIndex % (_speedInc.length);
+
+    _player.setSpeed(_speedInc[_speedIndex]);
+  }
+
   /// _isURL is a simple url validator
   /// only checks for http(https) protocol is valid
   bool _isURL(String s) => s.contains("http") && s.contains('://');
@@ -204,7 +267,13 @@ class BackgroundAudio extends BackgroundAudioTask {
     }
   }
 
-  void _setState({@required BasicPlaybackState state, int position}) {
+  /// _getSpeed returns double speed of the audio player
+  double _getSpeed() {
+    return _player != null ? _player.speed : 1.0;
+  }
+
+  void _setState(
+      {@required BasicPlaybackState state, int position, double speed}) {
     if (position == null) {
       position = _player.playbackEvent.position.inMilliseconds;
     }
@@ -213,6 +282,7 @@ class BackgroundAudio extends BackgroundAudioTask {
       //msystemActions: [MediaAction.seekTo],
       basicState: state,
       position: position,
+      speed: speed,
     );
   }
 

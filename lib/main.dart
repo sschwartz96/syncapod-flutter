@@ -1,6 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/home.dart';
 import 'package:syncapod/pages/login.dart';
 import 'models/user.dart';
@@ -33,15 +35,40 @@ class Syncapod extends StatelessWidget {
         child: MaterialApp(
           title: 'syncapod',
           theme: ThemeData(
-            // primaryColor: Colors.deepPurple.shade700,
-            // canvasColor: Colors.grey.shade900,
+            brightness: Brightness.dark,
+            primaryColor: purple,
+            accentColor: Colors.deepPurpleAccent,
+            canvasColor: darkGrey,
+            fontFamily: 'Quicksand',
+            textTheme: TextTheme(
+              bodyText1: TextStyle(
+                fontFamily: 'Quicksand',
+              ),
+              headline6: TextStyle(
+                fontFamily: 'Quicksand',
+                fontSize: 30,
+                fontWeight: FontWeight.w500,
+              ),
+              button: TextStyle(
+                fontSize: 24,
+                fontFamily: 'Quicksand',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            buttonColor: purple,
+            buttonTheme: ButtonThemeData(
+              buttonColor: Colors.deepPurple,
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10.0))),
+            ),
             inputDecorationTheme: InputDecorationTheme(
+              fillColor: Colors.deepPurple,
               border: OutlineInputBorder(),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.white),
               ),
             ),
-            cursorColor: Colors.blue.shade900,
           ),
           home: ShowPage(),
         ),

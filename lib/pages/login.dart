@@ -1,14 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/storage.dart';
 
-class LoginPage extends StatelessWidget {
+enum LoginPageState { IDLE, AUTHENTICATING, WRONG }
+
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   final TextEditingController userController = TextEditingController();
   final TextEditingController passController = TextEditingController();
   final FocusNode focusEmail = FocusNode();
   final FocusNode focusPassword = FocusNode();
+  LoginPageState _state = LoginPageState.IDLE;
 
   @override
   Widget build(BuildContext context) {
@@ -21,31 +30,29 @@ class LoginPage extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.blueAccent,
         body: SafeArea(
-          child: Form(
-            autovalidate: true,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  loginText(),
-                  loginError(context),
-                  loginEmail(),
-                  loginPassword(context),
-                  loginButton(
-                    context,
-                    'LOGIN',
-                    Colors.purple.shade400,
-                    Colors.blue.shade900,
-                  ),
-                  loginButton(
-                    context,
-                    'SIGN UP',
-                    Colors.blue.shade900,
-                    Colors.purple.shade400,
-                  ),
-                ],
+          child: Center(
+            child: SingleChildScrollView(
+              child: Form(
+                autovalidate: true,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    _loginLogo(),
+                    SizedBox(height: 40),
+                    //_loginText(context),
+                    loginError(context),
+                    loginEmail(),
+                    SizedBox(height: 10),
+                    loginPassword(context),
+                    SizedBox(height: 6),
+                    ForgotPasswordText(),
+                    SizedBox(height: 30),
+                    loginButton(context),
+                    SizedBox(height: 120),
+                    signupButton(context),
+                  ],
+                ),
               ),
             ),
           ),
@@ -54,24 +61,29 @@ class LoginPage extends StatelessWidget {
     );
   }
 
-  Widget loginText() => Container(
+  Widget _loginLogo() => Container(
+        child: Image.asset(
+          'assets/images/syncapod_logo.png',
+          alignment: Alignment.center,
+          fit: BoxFit.fill,
+          width: 200,
+          height: 200,
+        ),
+      );
+
+  Widget _loginText(BuildContext context) => Container(
         margin: EdgeInsets.only(bottom: 20),
         child: Text(
-          'syncapod',
-          style: TextStyle(
-            color: Colors.white,
-            fontFamily: GoogleFonts.getFont('Quicksand').fontFamily,
-            fontSize: 40.0,
-          ),
+          'Please sign in to continue',
+          style: Theme.of(context).textTheme.headline6,
         ),
       );
 
   Widget loginError(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    if (auth.wrongPassword)
+    if (_state == LoginPageState.WRONG)
       return Container(
         child: Text(
-          'Wrong Password',
+          'Wrong username or password',
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -90,7 +102,7 @@ class LoginPage extends StatelessWidget {
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
             labelStyle: TextStyle(
-              color: Colors.grey.shade800,
+              color: Colors.grey,
             ),
             labelText: 'Email',
           ),
@@ -99,45 +111,147 @@ class LoginPage extends StatelessWidget {
 
   Widget loginPassword(BuildContext context) => Container(
         constraints: BoxConstraints(maxWidth: 300.0),
-        margin: EdgeInsets.only(bottom: 40),
         child: TextFormField(
           controller: passController,
           focusNode: focusPassword,
           onFieldSubmitted: (String s) {
-            var storage = Provider.of<StorageProvider>(context, listen: false);
-            Provider.of<AuthProvider>(context, listen: false).authenticate(
-                storage, userController.text, passController.text);
+            _authenticate(context);
           },
           obscureText: true,
           decoration: InputDecoration(
             labelStyle: TextStyle(
-              color: Colors.grey.shade800,
+              color: Colors.grey,
             ),
             labelText: 'Password',
           ),
         ),
       );
 
-  Widget loginButton(BuildContext context, String text, Color backColor,
-          Color textColor) =>
-      Container(
-        constraints: BoxConstraints.expand(height: 100),
-        color: backColor,
-        child: (FlatButton(
-          onPressed: () {
-            var storage = Provider.of<StorageProvider>(context, listen: false);
-            Provider.of<AuthProvider>(context, listen: false).authenticate(
-                storage, userController.text, passController.text);
-          },
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: GoogleFonts.getFont('Open Sans').fontFamily,
-              color: textColor,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+  Widget signupButton(BuildContext context) => FlatButton(
+        textColor: Colors.grey,
+        onPressed: () {},
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(
+              'Sign Up',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  .apply(color: Colors.grey, fontSizeDelta: 8.0),
             ),
-          ),
-        )),
+            SizedBox(
+              width: 8,
+            ),
+            Icon(Icons.person_add),
+          ],
+        ),
       );
+  //  FlatButton(
+  //   color: Colors.grey.shade700,
+  //   onPressed: () {},
+  //   child: Container(
+  //     width: 140,
+  //     child: Row(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: <Widget>[
+  //         Text(
+  //           'Sign Up',
+  //           style: Theme.of(context)
+  //               .textTheme
+  //               .bodyText1
+  //               .apply(fontSizeDelta: 8.0),
+  //         ),
+  //         SizedBox(
+  //           width: 8,
+  //         ),
+  //         Icon(Icons.person_add)
+  //       ],
+  //     ),
+  //   ),
+  // );
+
+  Widget loginButton(BuildContext context) => FlatButton(
+        color: Theme.of(context).buttonColor,
+        onPressed: () {
+          _authenticate(context);
+        },
+        child: Container(
+          width: 140,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                'Login',
+                style: Theme.of(context).textTheme.button,
+              ),
+              SizedBox(
+                width: 8,
+              ),
+              Icon(Icons.forward)
+            ],
+          ),
+        ),
+      );
+
+  void _authenticate(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final storage = Provider.of<StorageProvider>(context, listen: false);
+    _state = LoginPageState.AUTHENTICATING;
+    // show a loading dialog
+    showDialog(
+      context: context,
+      builder: (context) => FutureBuilder(
+        future: authProvider.authenticate(
+            storage, userController.text, passController.text),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            // if the username or password is wrong
+            if (!snapshot.data) _state = LoginPageState.WRONG;
+            // else means its correct and handled by AuthProvider
+
+            Navigator.maybePop(context);
+            return Container();
+          } else {
+            return Center(
+              child: Container(
+                  height: 50, width: 50, child: CircularProgressIndicator()),
+            );
+          }
+        },
+      ),
+    ).whenComplete(() => setState(() {}));
+  }
+}
+
+class ForgotPasswordText extends StatefulWidget {
+  @override
+  _ForgotPasswordTextState createState() => _ForgotPasswordTextState();
+}
+
+class _ForgotPasswordTextState extends State<ForgotPasswordText> {
+  Color _textColor = Colors.grey.shade300;
+
+  @override
+  Widget build(BuildContext context) {
+    return FlatButton(
+      onPressed: () {},
+      child: Text(
+        'Forgot Password?',
+        style: TextStyle(
+          color: _textColor,
+          fontSize: 20,
+          fontWeight: FontWeight.w300,
+          decoration: TextDecoration.underline,
+          decorationColor: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
 }
