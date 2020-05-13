@@ -88,5 +88,5 @@ class UserEpisode {
 
   String toJson() => json.encode(toMap());
 
-  static UserEpisode fromJson(String source) => fromMap(json.decode(source));
+  static UserEpisode fromJson(String source) => fromMap(json?.decode(source));
 }

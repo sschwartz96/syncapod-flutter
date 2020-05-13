@@ -36,11 +36,19 @@ class _PlaybackButtonState extends State<PlaybackButton> {
         },
         onTap: widget.onPressed,
         child: Container(
-          child: Icon(
-            widget.icon,
-            size: widget.size,
-            color: color,
-          ),
+          width: widget.size,
+          height: widget.size,
+          child: widget.icon == null
+              ? Container(
+                  width: widget.size * .5,
+                  height: widget.size * .5,
+                  child: CircularProgressIndicator(),
+                )
+              : Icon(
+                  widget.icon,
+                  size: widget.size,
+                  color: color,
+                ),
         ),
       ),
     );

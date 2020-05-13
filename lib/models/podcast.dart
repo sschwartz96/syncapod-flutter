@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:syncapod/providers/podcast.dart';
 
 class Podcast {
   final String id;
@@ -173,6 +172,19 @@ class Episode {
   String toJson() => json.encode(toMap());
 
   static Episode fromJson(String source) => fromMap(json.decode(source));
+
+  static Episode fromMediaItem(MediaItem item) {
+    return Episode(
+      id: item.extras['epi_id'],
+      podcastID: item.extras['pod_id'],
+      title: item.title,
+      mp3URL: item.id,
+      image: PodImage(url: item.artUri),
+      author: item.artist,
+      durationMillis: item.duration,
+      subtitle: item.displaySubtitle,
+    );
+  }
 
   MediaItem toMediaItem() {
     return MediaItem(

@@ -37,7 +37,10 @@ class PodcastProvider extends ChangeNotifier {
     final reqJSON = json.jsonEncode(resMap);
     final response = await NetworkProvider.postJSON(url, token, reqJSON);
     final decoded = utf8.decode(response.bodyBytes);
-    print('our decoded user episode: $decoded');
+    // if we have errror
+    if (decoded.contains('message')) {
+      return null;
+    }
 
     return UserEpisode.fromJson(decoded);
   }
@@ -53,7 +56,10 @@ class PodcastProvider extends ChangeNotifier {
     final reqJSON = json.jsonEncode(resMap);
     final response = await NetworkProvider.postJSON(url, token, reqJSON);
     final decoded = utf8.decode(response.bodyBytes);
+    print('$decoded');
 
-    return UserEpisode.fromJson(decoded);
+    return;
   }
+
+  Future<Episode> getLatestPlayed(String token) {}
 }

@@ -47,9 +47,9 @@ class BackgroundAudio extends BackgroundAudioTask {
   void onPlayMediaItem(MediaItem mediaItem) async {
     // need to first get the latest playback for user
     print('_token: $_token');
-    final userEpi = await _podcastProvider.getUserEpisode(
+    final userEpi = _podcastProvider.getUserEpisode(
         _token, mediaItem.extras['epi_id'], mediaItem.extras['pod_id']);
-    print('our offset: ${userEpi?.offset}');
+    //print('our offset: ${userEpi?.offset}');
 
     Duration duration;
     // set the url, buffer, and play
@@ -75,10 +75,13 @@ class BackgroundAudio extends BackgroundAudioTask {
     _qIndex++;
 
     // play and set the offset
-    if (userEpi?.offset != null) {
-      _seek(Duration(milliseconds: userEpi.offset));
-    }
-    _player.play();
+    userEpi.then((value) {
+      print('val of userEpi: $value');
+      if (value?.offset != null) {
+        _seek(Duration(milliseconds: value.offset));
+      }
+      _player.play();
+    });
   }
 
   @override

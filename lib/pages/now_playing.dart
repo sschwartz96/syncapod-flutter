@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -7,7 +8,6 @@ import 'package:provider/provider.dart';
 import 'package:syncapod/bg_audio.dart';
 import 'package:syncapod/constants.dart';
 import 'package:syncapod/models/podcast.dart';
-import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
 import 'package:syncapod/widgets/playback_button.dart';
 import 'package:syncapod/widgets/seek_bar.dart';
@@ -15,9 +15,7 @@ import 'package:syncapod/widgets/seek_bar.dart';
 class NowPlayingPage extends StatefulWidget {
   final Podcast podcast;
   final Episode episode;
-  const NowPlayingPage(
-      {Key key, @required this.podcast, @required this.episode})
-      : super(key: key);
+  const NowPlayingPage({Key key, this.podcast, this.episode}) : super(key: key);
 
   @override
   _NowPlayingPageState createState() => _NowPlayingPageState(podcast, episode);
@@ -28,8 +26,9 @@ enum Status { StartingAudio, ToBePlayed, Playing, Paused }
 class _NowPlayingPageState extends State<NowPlayingPage> {
   Podcast _podcast;
   Episode _episode;
-  IconData playPauseIcon = Icons.pause_circle_filled;
+  IconData playPauseIcon = null;
   Status _currentStatus = Status.ToBePlayed;
+  String title;
   Image _curImage;
   Color _curBackground = Colors.grey.shade900;
   Color _curVibrant = Colors.deepPurple;
@@ -48,113 +47,107 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
           _setToken(context).then((value) => _playEpisode(context));
         }
       });
-    }
-
-    // start the background audio service
-    // Initiate playback start if we are in such state
-    if (AudioService.running && _currentStatus == Status.ToBePlayed) {
-      // AudioService.playMediaItem(_episode.toMediaItem());
-      _playEpisode(context);
+    } else {
+      // are we already playing?
+      if ((AudioService.playbackState.basicState ==
+                  BasicPlaybackState.playing ||
+              AudioService.playbackState.basicState ==
+                  BasicPlaybackState.paused) &&
+          _episode == null) {
+        _currentStatus = Status.Playing;
+        _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
+      } else
+      // start the background audio service
+      // Initiate playback start if we are in such state
+      if (_currentStatus == Status.ToBePlayed) {
+        // AudioService.playMediaItem(_episode.toMediaItem());
+        _playEpisode(context);
+      }
     }
 
     // Load the image
-    if (_curImage == null) {
-      _curImage = Image.network(
-        _episode.image.url,
-        alignment: Alignment.center,
-        fit: BoxFit.cover,
-        height: 310,
-        width: 360,
-      );
-    }
+    // if (_curImage == null) {
+    // _curImage = Image.network(
+    // _episode.image.url,
+    // alignment: Alignment.center,
+    // fit: BoxFit.cover,
+    // height: 310,
+    // width: 360,
+    // loadingBuilder: (context, child, progress) {
+    // if (progress == null) return child;
+//
+    // return Container();
+    // },
+    // );
+    // }
 
-    return FutureBuilder<PaletteGenerator>(
-      future: PaletteGenerator.fromImageProvider(_curImage.image),
-      builder: (context, genColorSnap) {
-        // generate custom colors
-        if (genColorSnap.hasData) {
-          final c = genColorSnap.data;
+    return Scaffold(
+      appBar: AppBar(
+        title: _title(),
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+      ),
+      backgroundColor: _curBackground,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [_curBackground, Colors.grey.shade900, darkGrey],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: _pageContents(),
+          ),
+        ),
+      ),
+    );
+  }
 
-          _curBackground = (c.darkVibrantColor != null
-              ? c.darkVibrantColor.color
-              : _curBackground);
-          _curVibrant = (c.vibrantColor != null
-              ? c.vibrantColor.color
-              : (c.lightVibrantColor != null
-                  ? c.lightVibrantColor.color
-                  : _curVibrant));
-          _curMuted = (c.mutedColor != null
-              ? c.mutedColor.color
-              : (c.lightMutedColor != null
-                  ? c.lightMutedColor.color
-                  : _curMuted));
-        }
+  Widget _title() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const fontSize = 18.0;
+        final span = TextSpan(
+          text: _episode.title,
+          style: TextStyle(
+            fontSize: fontSize,
+          ),
+        );
 
-        return Scaffold(
-          appBar: AppBar(
-            title: LayoutBuilder(
-              builder: (context, constraints) {
-                const fontSize = 18.0;
-                final span = TextSpan(
-                  text: _episode.title,
+        // textpainter to see if we overflow
+        final textPainter = TextPainter(
+          maxLines: 1,
+          textAlign: TextAlign.left,
+          textDirection: TextDirection.ltr,
+          text: span,
+        );
+
+        // "render" to virtual space
+        textPainter.layout(maxWidth: constraints.maxWidth);
+
+        // check if we overflowed
+        return textPainter.didExceedMaxLines
+            ? SizedBox(
+                height: 40,
+                width: constraints.maxWidth,
+                child: Marquee(
+                  text: '${_episode.title} ',
+                  velocity: 30,
+                  blankSpace: 60,
+                  pauseAfterRound: Duration(seconds: 2),
                   style: TextStyle(
                     fontSize: fontSize,
                   ),
-                );
-
-                // textpainter to see if we overflow
-                final textPainter = TextPainter(
-                  maxLines: 1,
-                  textAlign: TextAlign.left,
-                  textDirection: TextDirection.ltr,
-                  text: span,
-                );
-
-                // "render" to virtual space
-                textPainter.layout(maxWidth: constraints.maxWidth);
-
-                // check if we overflowed
-                return textPainter.didExceedMaxLines
-                    ? SizedBox(
-                        height: 40,
-                        width: constraints.maxWidth,
-                        child: Marquee(
-                          text: '${_episode.title} ',
-                          velocity: 30,
-                          blankSpace: 60,
-                          pauseAfterRound: Duration(seconds: 2),
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        _episode.title,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                        ),
-                      );
-              },
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0.0,
-          ),
-          backgroundColor: _curBackground,
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [_curBackground, Colors.grey.shade900, darkGrey],
-              ),
-            ),
-            child: Center(
-              child: SingleChildScrollView(
-                child: _pageContents(),
-              ),
-            ),
-          ),
-        );
+                ),
+              )
+            : Text(
+                _episode.title,
+                style: TextStyle(
+                  fontSize: fontSize,
+                ),
+              );
       },
     );
   }
@@ -171,18 +164,36 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
         _updatePlayIcon(false);
 
+        // main column of the page
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Center(
-              child: _curImage,
+              child: _curImage = Image.network(
+                _episode.image.url,
+                alignment: Alignment.center,
+                fit: BoxFit.cover,
+                height: 310,
+                width: 360,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) {
+                    if (_curMuted == Colors.grey) {
+                      print('getting palette');
+                      _getColorPalette();
+                    }
+                    return child;
+                  }
+
+                  return Center(child: CircularProgressIndicator());
+                },
+              ),
             ),
             SizedBox(
               height: 50,
             ),
             StreamBuilder<Object>(
-                stream: Stream.periodic(Duration(seconds: 1)),
+                stream: Stream.periodic(Duration(milliseconds: 500)),
                 builder: (context, snapshot) {
                   final position = AudioService.playbackState != null
                       ? Duration(
@@ -278,10 +289,42 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
     );
   }
 
+  void _getColorPalette() async {
+    Future.delayed(Duration(milliseconds: 250)).then((value) => {
+          PaletteGenerator.fromImageProvider(
+            _curImage.image,
+            size: Size(_curImage.width, _curImage.height),
+          ).then((c) {
+            // generate custom colors
+            setState(() {
+              _curBackground = (c.darkVibrantColor != null
+                  ? c.darkVibrantColor.color
+                  : _curBackground);
+              _curVibrant = (c.vibrantColor != null
+                  ? c.vibrantColor.color
+                  : (c.lightVibrantColor != null
+                      ? c.lightVibrantColor.color
+                      : _curVibrant));
+              _curMuted = (c.mutedColor != null
+                  ? c.mutedColor.color
+                  : (c.lightMutedColor != null
+                      ? c.lightMutedColor.color
+                      : _curMuted));
+            });
+          }),
+        });
+  }
+
   /// _updatePlayIcon gets the AudioService state and changes the icon
   /// [playButtonPressed] is if this is called from the onPress function
   void _updatePlayIcon(bool playButtonPressed) {
-    if ((AudioService.playbackState.basicState == BasicPlaybackState.playing)) {
+    final state = AudioService.playbackState.basicState;
+    if (state == BasicPlaybackState.connecting ||
+        state == BasicPlaybackState.buffering) {
+      playPauseIcon = null;
+      return;
+    }
+    if (state == BasicPlaybackState.playing) {
       if (playButtonPressed)
         playPauseIcon = Icons.play_arrow;
       else

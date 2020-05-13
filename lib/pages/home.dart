@@ -1,8 +1,11 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/pages/now_playing.dart';
 import 'package:syncapod/pages/subscriptions.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/storage.dart';
+import 'package:syncapod/widgets/now_playing_bar.dart';
 
 enum Tab { Home, Subscriptions, Search, Settings }
 
@@ -50,27 +53,35 @@ class _BottomNavState extends State<BottomNav> {
           ],
         ),
         body: SafeArea(
-          child: IndexedStack(
-            index: _currentIndex,
+          child: Column(
             children: <Widget>[
-              _home(context),
-              SubscriptionsTab(
-                navKey: _tabKeys[Tab.Subscriptions],
+              Expanded(
+                flex: 1,
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: <Widget>[
+                    _home(context),
+                    SubscriptionsTab(
+                      navKey: _tabKeys[Tab.Subscriptions],
+                    ),
+                    _home(context),
+                    _home(context),
+                  ],
+                ),
               ),
-              _home(context),
-              _home(context),
+              NowPlayingBar(),
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            final storage =
-                Provider.of<StorageProvider>(context, listen: false);
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            auth.logout(storage);
-          },
-          child: Icon(Icons.remove_circle_outline),
-        ),
+        // floatingActionButton: FloatingActionButton(
+        // onPressed: () {
+        // final storage =
+        // Provider.of<StorageProvider>(context, listen: false);
+        // final auth = Provider.of<AuthProvider>(context, listen: false);
+        // auth.logout(storage);
+        // },
+        // child: Icon(Icons.remove_circle_outline),
+        // ),
       ),
     );
   }
