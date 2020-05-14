@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
   Color _curBackground = Colors.grey.shade900;
   Color _curVibrant = Colors.deepPurple;
   Color _curMuted = Colors.grey;
+  bool gettingPalette = false;
 
   _NowPlayingPageState(this._podcast, this._episode);
 
@@ -164,6 +167,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
         _updatePlayIcon(false);
 
+        final width = MediaQuery.of(context).size.width;
         // main column of the page
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -174,12 +178,12 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                 _episode.image.url,
                 alignment: Alignment.center,
                 fit: BoxFit.cover,
-                height: 310,
-                width: 360,
+                width: min(width * .88, 400),
+                height: min(width * .70, 400),
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) {
-                    if (_curMuted == Colors.grey) {
-                      print('getting palette');
+                    if (!gettingPalette && _curMuted == Colors.grey) {
+                      gettingPalette = true;
                       _getColorPalette();
                     }
                     return child;
@@ -290,10 +294,10 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
   }
 
   void _getColorPalette() async {
+    print('getting palette');
     Future.delayed(Duration(milliseconds: 250)).then((value) => {
           PaletteGenerator.fromImageProvider(
             _curImage.image,
-            size: Size(_curImage.width, _curImage.height),
           ).then((c) {
             // generate custom colors
             setState(() {

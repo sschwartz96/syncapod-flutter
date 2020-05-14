@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:syncapod/pages/now_playing.dart';
+import 'package:syncapod/pages/settings.dart';
 import 'package:syncapod/pages/subscriptions.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/storage.dart';
@@ -65,7 +66,7 @@ class _BottomNavState extends State<BottomNav> {
                       navKey: _tabKeys[Tab.Subscriptions],
                     ),
                     _home(context),
-                    _home(context),
+                    SettingsPage(),
                   ],
                 ),
               ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:syncapod/constants.dart';
 import 'package:syncapod/providers/podcast.dart';
 
 class BackgroundAudio extends BackgroundAudioTask {
@@ -352,7 +353,7 @@ Future<bool> startAudioService() {
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidNotificationChannelName: 'syncapod audio',
       androidArtDownscaleSize: Size(200, 200),
-      notificationColor: 0xFF2196f3,
+      notificationColor: darkGrey.value,
       enableQueue: true,
       androidStopForegroundOnPause: true,
     ).catchError((error) {

@@ -35,8 +35,10 @@ class PodcastTile extends StatelessWidget {
           Flexible(
             child: Container(
               margin: EdgeInsets.only(left: 8),
+              height: 200,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   Text(
                     _podcast.title,
@@ -46,6 +48,9 @@ class PodcastTile extends StatelessWidget {
                   ),
                   Text(
                     _podcast.subtitle,
+                    maxLines: 3,
+                    softWrap: true,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,

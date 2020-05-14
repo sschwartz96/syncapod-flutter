@@ -31,45 +31,73 @@ class _LoginPageState extends State<LoginPage> {
       },
       child: Scaffold(
         body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              child: Form(
-                autovalidate: true,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    _loginLogo(),
-                    SizedBox(height: 40),
-                    //_loginText(context),
-                    loginError(context),
-                    loginEmail(),
-                    SizedBox(height: 10),
-                    loginPassword(context),
-                    SizedBox(height: 6),
-                    ForgotPasswordText(),
-                    SizedBox(height: 30),
-                    loginButton(context),
-                    SizedBox(height: 120),
-                    signupButton(context),
-                  ],
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final width = constraints.maxWidth;
+              final height = constraints.maxHeight;
+              print('our max width: $width');
+              print('our max height: $height');
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: height,
+                  ),
+                  child: _pageContents(
+                    context,
+                    width,
+                    height,
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),
     );
   }
 
-  Widget _loginLogo() => Container(
-        child: Image.asset(
-          'assets/images/syncapod_logo.png',
-          alignment: Alignment.center,
-          fit: BoxFit.fill,
-          width: 200,
-          height: 200,
-        ),
-      );
+  Widget _pageContents(BuildContext context, double width, double height) {
+    return IntrinsicHeight(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          SizedBox(height: height / 50),
+          _loginLogo(width),
+          SizedBox(height: height / 25),
+          //_loginText(context),
+          loginError(context),
+          loginEmail(),
+          SizedBox(height: 10),
+          loginPassword(context),
+          SizedBox(height: 6),
+          ForgotPasswordText(),
+          SizedBox(height: 30),
+          loginButton(context),
+          Expanded(
+            flex: 1,
+            child: Container(
+              height: 30,
+            ),
+          ),
+          signupButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _loginLogo(double deviceWidth) {
+    return Container(
+      child: Image.asset(
+        'assets/images/syncapod_logo.png',
+        alignment: Alignment.center,
+        fit: BoxFit.fill,
+        width: deviceWidth / 2,
+        height: deviceWidth / 2,
+      ),
+    );
+  }
 
   Widget _loginText(BuildContext context) => Container(
         margin: EdgeInsets.only(bottom: 20),
@@ -226,7 +254,9 @@ class _LoginPageState extends State<LoginPage> {
           }
         },
       ),
-    ).whenComplete(() => setState(() {}));
+    ).whenComplete(() {
+      if (_state == LoginPageState.WRONG) setState(() {});
+    });
   }
 }
 
