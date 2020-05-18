@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 
 class Podcast {
   final String id;
@@ -186,12 +187,12 @@ class Episode {
     );
   }
 
-  MediaItem toMediaItem() {
+  MediaItem toMediaItem(Podcast p) {
     return MediaItem(
       title: this.title,
       id: this.mp3URL,
       artUri: this.image.url,
-      artist: this.author,
+      artist: p.title,
       displaySubtitle: this.subtitle,
       displayTitle: this.title,
       duration: this.durationMillis,
@@ -256,4 +257,67 @@ class PodImage {
   String toJson() => json.encode(toMap());
 
   static PodImage fromJson(String source) => fromMap(json.decode(source));
+}
+
+class LatestPlayed {
+  final Podcast podcast;
+  final Episode episode;
+  final int offset;
+
+  LatestPlayed({
+    this.podcast,
+    this.episode,
+    this.offset,
+  });
+
+  LatestPlayed copyWith({
+    Podcast podcast,
+    Episode episode,
+    int offset,
+  }) {
+    return LatestPlayed(
+      podcast: podcast ?? this.podcast,
+      episode: episode ?? this.episode,
+      offset: offset ?? this.offset,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'podcast': podcast?.toMap(),
+      'episode': episode?.toMap(),
+      'offset': offset,
+    };
+  }
+
+  static LatestPlayed fromMap(Map<String, dynamic> map) {
+    if (map == null) return null;
+
+    return LatestPlayed(
+      podcast: Podcast.fromMap(map['podcast']),
+      episode: Episode.fromMap(map['episode']),
+      offset: map['offset'],
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  static LatestPlayed fromJson(String source) => fromMap(json.decode(source));
+
+  @override
+  String toString() =>
+      'LatestPlayed(podcast: $podcast, episode: $episode, offset: $offset)';
+
+  @override
+  bool operator ==(Object o) {
+    if (identical(this, o)) return true;
+
+    return o is LatestPlayed &&
+        o.podcast == podcast &&
+        o.episode == episode &&
+        o.offset == offset;
+  }
+
+  @override
+  int get hashCode => podcast.hashCode ^ episode.hashCode ^ offset.hashCode;
 }

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -30,7 +29,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
   Episode _episode;
   IconData playPauseIcon = null;
   Status _currentStatus = Status.ToBePlayed;
-  String title;
+  String title, _imgUrl;
   Image _curImage;
   Color _curBackground = Colors.grey.shade900;
   Color _curVibrant = Colors.deepPurple;
@@ -60,11 +59,15 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
         _currentStatus = Status.Playing;
         _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
       } else
-      // start the background audio service
       // Initiate playback start if we are in such state
       if (_currentStatus == Status.ToBePlayed) {
-        // AudioService.playMediaItem(_episode.toMediaItem());
-        _playEpisode(context);
+        // only reason to be here is because coming from latestPlayed
+        if (AudioService.currentMediaItem != null && _episode == null) {
+          _currentStatus = Status.Playing;
+          _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
+        } else {
+          _playEpisode(context);
+        }
       }
     }
 
@@ -343,7 +346,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
   void _playEpisode(BuildContext context) {
     // transform episode to [MediaItem]
-    final mediaItem = _episode.toMediaItem();
+    final mediaItem = _episode.toMediaItem(_podcast);
 
     // play the media item with the audio service
     AudioService.playMediaItem(mediaItem);

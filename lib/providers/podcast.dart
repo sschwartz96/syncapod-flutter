@@ -54,12 +54,15 @@ class PodcastProvider extends ChangeNotifier {
       "offset": offset,
     };
     final reqJSON = json.jsonEncode(resMap);
-    final response = await NetworkProvider.postJSON(url, token, reqJSON);
-    final decoded = utf8.decode(response.bodyBytes);
-    print('$decoded');
-
-    return;
+    // final response = await NetworkProvider.postJSON(url, token, reqJSON);
+    await NetworkProvider.postJSON(url, token, reqJSON);
+    // final decoded = utf8.decode(response.bodyBytes);
   }
 
-  Future<Episode> getLatestPlayed(String token) {}
+  Future<LatestPlayed> getLatestPlayed(String token) async {
+    final url = _baseURL + 'episodes/latest';
+    final response = await NetworkProvider.postJSON(url, token, '');
+    final decoded = utf8.decode(response.bodyBytes);
+    return LatestPlayed.fromJson(decoded);
+  }
 }

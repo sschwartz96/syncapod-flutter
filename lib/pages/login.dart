@@ -35,8 +35,6 @@ class _LoginPageState extends State<LoginPage> {
             builder: (BuildContext context, BoxConstraints constraints) {
               final width = constraints.maxWidth;
               final height = constraints.maxHeight;
-              print('our max width: $width');
-              print('our max height: $height');
               return SingleChildScrollView(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(

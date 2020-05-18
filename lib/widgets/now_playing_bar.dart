@@ -1,17 +1,29 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
+import 'package:provider/provider.dart';
+import 'package:syncapod/bg_audio.dart' as bgAudio;
 import 'package:syncapod/pages/now_playing.dart';
+import 'package:syncapod/providers/podcast.dart';
+import 'package:syncapod/providers/storage.dart';
 
-class NowPlayingBar extends StatelessWidget {
+class NowPlayingBar extends StatefulWidget {
+  @override
+  _NowPlayingBarState createState() => _NowPlayingBarState();
+}
+
+class _NowPlayingBarState extends State<NowPlayingBar> {
+  bool audioServiceStarting = false;
+
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
     bool playing = false;
+    final width = MediaQuery.of(context).size.width;
 
     return StreamBuilder<MediaItem>(
       stream: AudioService.currentMediaItemStream,
       builder: (context, snapshot) {
+        // if we have data in our audio service
         if (snapshot.hasData) {
           final item = snapshot.data;
           if (item != null) {
@@ -71,10 +83,46 @@ class NowPlayingBar extends StatelessWidget {
             );
           }
         } else {
+          if (!audioServiceStarting) {
+            _getLatestPlayed(context);
+          }
           return Container();
         }
       },
     );
+  }
+
+  void _getLatestPlayed(BuildContext context) async {
+    audioServiceStarting = true;
+    // get the token
+    final token = await Provider.of<StorageProvider>(context, listen: false)
+        .read(StorageProvider.key_access_token);
+    AudioService.customAction('setToken', token);
+
+    // go get the latest podcast
+    final latestPlayed =
+        await Provider.of<PodcastProvider>(context, listen: false)
+            .getLatestPlayed(token);
+
+    // check if null (user has no latest played)
+    if (latestPlayed == null) return;
+
+    // convert episode to media item and add to queue
+    var mediaItem = latestPlayed.episode.toMediaItem(latestPlayed.podcast);
+    mediaItem.extras['offset'] = latestPlayed.offset;
+
+    // start the audio service if neccessary
+    if (!AudioService.running) {
+      bgAudio.startAudioService().then((value) {
+        print('audio service started: $value');
+        audioServiceStarting = false;
+        if (value ?? false) {
+          AudioService.addQueueItem(mediaItem);
+        }
+      });
+    } else {
+      // AudioService.addQueueItem(mediaItem);
+    }
   }
 
   Widget _titleText(BuildContext context, String title) {
@@ -98,8 +146,6 @@ class NowPlayingBar extends StatelessWidget {
 
         // "render" to virtual space
         textPainter.layout(maxWidth: constraints.maxWidth);
-        print('we have ${constraints.maxWidth} max width');
-        print('we have ${constraints.maxHeight} max height');
 
         // check if we overflowed
         return Container(

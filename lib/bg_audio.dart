@@ -23,6 +23,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     print('background on start');
     _podcastProvider = PodcastProvider();
     _player = AudioPlayer();
+    print('started audio player');
     _completer = Completer();
 
     var playerStateSubscription = _player.playbackStateStream
@@ -47,10 +48,8 @@ class BackgroundAudio extends BackgroundAudioTask {
   @override
   void onPlayMediaItem(MediaItem mediaItem) async {
     // need to first get the latest playback for user
-    print('_token: $_token');
     final userEpi = _podcastProvider.getUserEpisode(
         _token, mediaItem.extras['epi_id'], mediaItem.extras['pod_id']);
-    //print('our offset: ${userEpi?.offset}');
 
     Duration duration;
     // set the url, buffer, and play
@@ -72,22 +71,44 @@ class BackgroundAudio extends BackgroundAudioTask {
 
     // "add to queue"
     AudioServiceBackground.setMediaItem(mediaItem);
+    _queue.clear();
     _queue.add(mediaItem);
-    _qIndex++;
+    _qIndex = 0;
 
     // play and set the offset
     userEpi.then((value) {
       print('val of userEpi: $value');
       if (value?.offset != null) {
-        _seek(Duration(milliseconds: value.offset));
+        _seek(Duration(milliseconds: value.offset))
+            .then((value) => _player.play());
+      } else {
+        _player.play();
       }
-      _player.play();
     });
   }
 
   @override
   void onAddQueueItem(MediaItem mediaItem) {
-    _queue.add(mediaItem);
+    // assume we are adding mediaitem from latest play
+    if (_queue.length == 0) {
+      _addLatestPlayed(mediaItem);
+    } else {
+      _queue.add(mediaItem);
+    }
+  }
+
+  @override
+  Future onCustomAction(String name, arguments) {
+    print('custom action called: $name');
+    switch (name) {
+      case 'speed':
+        _nextSpeed(arguments);
+        break;
+      case 'setToken':
+        print('setting token in audio service: $arguments');
+        _token = arguments;
+        break;
+    }
   }
 
   @override
@@ -108,20 +129,6 @@ class BackgroundAudio extends BackgroundAudioTask {
   void onClick(MediaButton button) {
     print('onclick media button called');
     _playPause();
-  }
-
-  @override
-  Future onCustomAction(String name, arguments) {
-    print('custom action called: $name');
-    switch (name) {
-      case 'speed':
-        _nextSpeed(arguments);
-        break;
-      case 'setToken':
-        print('setting token in audio service: $arguments');
-        _token = arguments;
-        break;
-    }
   }
 
   @override
@@ -196,6 +203,28 @@ class BackgroundAudio extends BackgroundAudioTask {
 
   // ***************** helper methods for the audio service ***************** //
 
+  /// _addLatestPlayed takes a media item and adds it to the queue
+  /// its assumed that nothing is previously in the queue
+  /// and the item.extras contains an offset value
+  void _addLatestPlayed(MediaItem item) {
+    // set the queue and add to audio service background
+    _queue.clear();
+    _queue.add(item);
+    _qIndex = 0;
+    AudioServiceBackground.setMediaItem(item);
+
+    // set the proper offset
+    _player.setUrl(item.id).then((value) {
+      print("seeking: ${item.extras['offset']}");
+      _seek(Duration(milliseconds: item.extras['offset'])).then((value) {
+        // a hack to otherwise player stays in a perpetual state of loading
+        // TODO: fix???
+        _player.play();
+        _player.pause();
+      });
+    });
+  }
+
   Duration _getPosition() => _player.playbackEvent == null
       ? Duration.zero
       : _player.playbackEvent.position;
@@ -229,7 +258,7 @@ class BackgroundAudio extends BackgroundAudioTask {
   /// _seek seeks to the specified duration
   /// checks for proper player state
   /// may modify value to fit within the duration of audio
-  void _seek(Duration d) {
+  Future<void> _seek(Duration d) async {
     // check for proper seeking state
     final state = _player.playbackState;
     if (state != AudioPlaybackState.connecting &&
@@ -241,7 +270,7 @@ class BackgroundAudio extends BackgroundAudioTask {
       final ttlDur = _getDuration();
       if (d > ttlDur) d = (ttlDur - Duration(seconds: 5));
 
-      _player.seek(d);
+      return _player.seek(d);
     }
   }
 
@@ -348,7 +377,7 @@ void backgroundTaskEntrypoint() {
 }
 
 Future<bool> startAudioService() {
-  if (!AudioService.running)
+  if (!AudioService.running) {
     return AudioService.start(
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidNotificationChannelName: 'syncapod audio',
@@ -357,12 +386,8 @@ Future<bool> startAudioService() {
       enableQueue: true,
       androidStopForegroundOnPause: true,
     ).catchError((error) {
-      print(error);
-    }).whenComplete(
-      () => () {
-        print('completed on start');
-      },
-    );
-  else
+      print('error starting audioService: $error');
+    });
+  } else
     return Future.value(false);
 }
