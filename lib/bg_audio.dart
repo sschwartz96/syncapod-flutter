@@ -11,38 +11,38 @@ class BackgroundAudio extends BackgroundAudioTask {
   String _token;
 
   AudioPlayer _player;
-  Completer _completer;
-  bool pausedFromSystem;
   final List<MediaItem> _queue = [];
   int _qIndex = -1;
-  List<double> _speedInc = [1.0, 1.2, 1.5, 1.7, 2.0, 0.7];
   int _speedIndex = 0;
+  List<double> _speedInc = [1.0, 1.2, 1.5, 1.7, 2.0, 0.7];
+
+  // _interrupted keeps track if we lost focus
+  bool _interrupted = false;
 
   @override
-  Future<void> onStart() async {
+  void onStart(Map<String, dynamic> params) {
     print('background on start');
     _podcastProvider = PodcastProvider();
     _player = AudioPlayer();
     print('started audio player');
-    _completer = Completer();
 
-    var playerStateSubscription = _player.playbackStateStream
+    // attach player to audio service
+    _player.playbackStateStream
         .where((state) => state == AudioPlaybackState.completed)
         .listen((state) {
       _handlePlaybackCompleted();
     });
-    var eventSubscription = _player.playbackEventStream.listen((event) {
+
+    _player.playbackEventStream.listen((event) {
       final state = _eventToBasicState(event);
-      if (state != BasicPlaybackState.stopped) {
+      if (state != AudioProcessingState.stopped) {
         _setState(
           state: state,
-          position: _getPosition().inMilliseconds,
+          position: _getPosition(),
           speed: _getSpeed(),
         );
       }
     });
-
-    return _completer.future;
   }
 
   @override
@@ -57,6 +57,7 @@ class BackgroundAudio extends BackgroundAudioTask {
       print('playing from url: ${mediaItem.id}');
       duration = await _player.setUrl(mediaItem.id).then((value) {
         print('finisehed setting url');
+        return;
       });
     } else {
       print('playing from file path: ${mediaItem.id}');
@@ -65,8 +66,8 @@ class BackgroundAudio extends BackgroundAudioTask {
 
     // update duration if necessary
     print('media duration: ${mediaItem.duration}');
-    if (mediaItem.duration == null || mediaItem.duration == 0) {
-      mediaItem = mediaItem.copyWith(duration: duration.inMilliseconds);
+    if (mediaItem.duration == null || mediaItem.duration.inMilliseconds == 0) {
+      mediaItem = mediaItem.copyWith(duration: duration);
     }
 
     // "add to queue"
@@ -98,7 +99,7 @@ class BackgroundAudio extends BackgroundAudioTask {
   }
 
   @override
-  Future onCustomAction(String name, arguments) {
+  Future onCustomAction(String name, arguments) async {
     print('custom action called: $name');
     switch (name) {
       case 'speed':
@@ -138,11 +139,12 @@ class BackgroundAudio extends BackgroundAudioTask {
   }
 
   @override
-  void onStop() {
+  Future<void> onStop() async {
     print('background stop');
-    _player.stop();
     _queue.clear();
-    _completer.complete();
+    await _player.stop();
+
+    await super.onStop();
   }
 
   /// onSkipNext is implemented like fast forward for media buttons
@@ -165,40 +167,46 @@ class BackgroundAudio extends BackgroundAudioTask {
   @override
   void onRewind() {}
 
+  // @override
+  // void onAudioFocusLostTransient() {
+  //   print('onAudioFocusLostTransient()');
+  //   if (_player.playbackState == AudioPlaybackState.playing) {
+  //     _player.pause();
+  //     pausedFromSystem = true;
+  //   }
+  // }
+
+  // @override
+  // void onAudioFocusLostTransientCanDuck() {
+  //   _player.setVolume(33);
+  // }
+
   @override
-  void onAudioFocusLostTransient() {
-    print('onAudioFocusLostTransient()');
-    if (_player.playbackState == AudioPlaybackState.playing) {
-      _player.pause();
-      pausedFromSystem = true;
+  void onAudioFocusLost(AudioInterruption interruption) {
+    print('audio focus lost: $interruption');
+
+    if (_isPlaying()) _interrupted = true;
+    switch (interruption) {
+      case AudioInterruption.pause:
+      case AudioInterruption.temporaryPause:
+      case AudioInterruption.unknownPause:
+        onPause();
+        break;
+      case AudioInterruption.temporaryDuck:
+        _player.setVolume(50);
     }
   }
 
   @override
-  void onAudioFocusLostTransientCanDuck() {
-    _player.setVolume(33);
-  }
-
-  @override
-  void onAudioFocusLost() {
-    if (_player.playbackState == AudioPlaybackState.playing) {
-      _player.pause();
-      pausedFromSystem = true;
-    }
-  }
-
-  @override
-  void onAudioFocusGained() {
-    if (pausedFromSystem) {
-      _player.play();
-      pausedFromSystem = false;
-    }
+  void onAudioFocusGained(AudioInterruption interruption) {
+    print('audio focus gained: $interruption');
+    _player.play();
     _player.setVolume(100);
   }
 
   @override
-  void onSeekTo(int position) {
-    _seek(Duration(milliseconds: position));
+  void onSeekTo(Duration position) {
+    _seek(position);
   }
 
   // ***************** helper methods for the audio service ***************** //
@@ -230,7 +238,7 @@ class BackgroundAudio extends BackgroundAudioTask {
       : _player.playbackEvent.position;
 
   Duration _getDuration() => (_queue.length > 0)
-      ? Duration(milliseconds: _queue[_qIndex].duration)
+      ? _queue[_qIndex].duration
       : (_player.playbackEvent?.duration != null)
           ? _player.playbackEvent.duration
           : Duration.zero;
@@ -274,6 +282,10 @@ class BackgroundAudio extends BackgroundAudioTask {
     }
   }
 
+  bool _isPlaying() {
+    return _player.playbackState == AudioPlaybackState.playing;
+  }
+
   /// _nextSpeed changes the speed of the audio player to the next in the list
   /// [i] should be set to -1 if the index is not specified
   void _nextSpeed(int i) {
@@ -306,20 +318,20 @@ class BackgroundAudio extends BackgroundAudioTask {
   }
 
   void _setState(
-      {@required BasicPlaybackState state, int position, double speed}) {
+      {@required AudioProcessingState state, Duration position, double speed}) {
     if (position == null) {
-      position = _player.playbackEvent.position.inMilliseconds;
+      position = _player.playbackEvent.position;
     }
     AudioServiceBackground.setState(
       controls: getControls(state),
-      //msystemActions: [MediaAction.seekTo],
-      basicState: state,
+      processingState: state,
       position: position,
+      playing: _player.playbackState == AudioPlaybackState.playing,
       speed: speed,
     );
   }
 
-  List<MediaControl> getControls(BasicPlaybackState state) {
+  List<MediaControl> getControls(AudioProcessingState state) {
     if (_player.playbackState == AudioPlaybackState.playing) {
       return [rewindControl, pauseControl, forwardControl];
     } else {
@@ -327,23 +339,22 @@ class BackgroundAudio extends BackgroundAudioTask {
     }
   }
 
-  BasicPlaybackState _eventToBasicState(AudioPlaybackEvent event) {
+  AudioProcessingState _eventToBasicState(AudioPlaybackEvent event) {
     if (event.buffering) {
-      return BasicPlaybackState.buffering;
+      return AudioProcessingState.buffering;
     } else {
       switch (event.state) {
         case AudioPlaybackState.none:
-          return BasicPlaybackState.none;
+          return AudioProcessingState.none;
         case AudioPlaybackState.stopped:
-          return BasicPlaybackState.stopped;
+          return AudioProcessingState.stopped;
         case AudioPlaybackState.paused:
-          return BasicPlaybackState.paused;
         case AudioPlaybackState.playing:
-          return BasicPlaybackState.playing;
+          return AudioProcessingState.ready;
         case AudioPlaybackState.connecting:
-          return BasicPlaybackState.connecting;
+          return AudioProcessingState.connecting;
         case AudioPlaybackState.completed:
-          return BasicPlaybackState.stopped;
+          return AudioProcessingState.completed;
         default:
           throw Exception("Illegal state");
       }
@@ -382,8 +393,8 @@ Future<bool> startAudioService() {
       backgroundTaskEntrypoint: backgroundTaskEntrypoint,
       androidNotificationChannelName: 'syncapod audio',
       androidArtDownscaleSize: Size(200, 200),
-      notificationColor: darkGrey.value,
-      enableQueue: true,
+      androidNotificationColor: darkGrey.value,
+      androidEnableQueue: true,
       androidStopForegroundOnPause: true,
     ).catchError((error) {
       print('error starting audioService: $error');

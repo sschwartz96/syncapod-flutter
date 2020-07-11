@@ -51,10 +51,8 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
       });
     } else {
       // are we already playing?
-      if ((AudioService.playbackState.basicState ==
-                  BasicPlaybackState.playing ||
-              AudioService.playbackState.basicState ==
-                  BasicPlaybackState.paused) &&
+      if ((AudioService.playbackState.processingState ==
+              AudioProcessingState.ready) &&
           _episode == null) {
         _currentStatus = Status.Playing;
         _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
@@ -163,9 +161,9 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
       stream: AudioService.playbackStateStream,
       builder: (context, snapshot) {
         final fullState = snapshot.data;
-        final state = fullState?.basicState;
+        final state = fullState?.processingState;
         final duration = AudioService.currentMediaItem != null
-            ? Duration(milliseconds: AudioService.currentMediaItem.duration)
+            ? AudioService.currentMediaItem.duration
             : Duration.zero;
 
         _updatePlayIcon(false);
@@ -203,10 +201,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                 stream: Stream.periodic(Duration(milliseconds: 500)),
                 builder: (context, snapshot) {
                   final position = AudioService.playbackState != null
-                      ? Duration(
-                          milliseconds:
-                              AudioService.playbackState.currentPosition,
-                        )
+                      ? AudioService.playbackState.currentPosition
                       : Duration.zero;
 
                   return SeekBar(
@@ -214,7 +209,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
                     inactiveColor: _curMuted,
                     duration: duration,
                     position: position,
-                    onChangeEnd: (d) => AudioService.seekTo(d.inMilliseconds),
+                    onChangeEnd: (d) => AudioService.seekTo(d),
                   );
                 }),
             SizedBox(
@@ -325,13 +320,13 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
   /// _updatePlayIcon gets the AudioService state and changes the icon
   /// [playButtonPressed] is if this is called from the onPress function
   void _updatePlayIcon(bool playButtonPressed) {
-    final state = AudioService.playbackState.basicState;
-    if (state == BasicPlaybackState.connecting ||
-        state == BasicPlaybackState.buffering) {
+    final state = AudioService.playbackState.processingState;
+    if (state == AudioProcessingState.connecting ||
+        state == AudioProcessingState.buffering) {
       playPauseIcon = null;
       return;
     }
-    if (state == BasicPlaybackState.playing) {
+    if (AudioService.playbackState.playing) {
       if (playButtonPressed)
         playPauseIcon = Icons.play_arrow;
       else

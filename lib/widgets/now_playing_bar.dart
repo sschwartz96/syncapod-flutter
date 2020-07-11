@@ -27,8 +27,7 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
         if (snapshot.hasData) {
           final item = snapshot.data;
           if (item != null) {
-            playing = AudioService.playbackState.basicState ==
-                BasicPlaybackState.playing;
+            playing = AudioService.playbackState.playing;
             return InkWell(
               onTap: () {
                 Navigator.push(
@@ -97,7 +96,6 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
     // get the token
     final token = await Provider.of<StorageProvider>(context, listen: false)
         .read(StorageProvider.key_access_token);
-    AudioService.customAction('setToken', token);
 
     // go get the latest podcast
     final latestPlayed =
@@ -114,6 +112,7 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
     // start the audio service if neccessary
     if (!AudioService.running) {
       bgAudio.startAudioService().then((value) {
+        AudioService.customAction('setToken', token);
         print('audio service started: $value');
         audioServiceStarting = false;
         if (value ?? false) {
@@ -177,12 +176,11 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
       stream: AudioService.playbackStateStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          final state = snapshot.data.basicState;
           return InkWell(
             onTap: () => AudioService.play(),
             child: Container(
               child: Icon(
-                state == BasicPlaybackState.playing
+                AudioService.playbackState.playing
                     ? Icons.pause
                     : Icons.play_arrow,
                 size: 32,

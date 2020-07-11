@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter/foundation.dart';
 
 class Podcast {
   final String id;
@@ -182,7 +181,7 @@ class Episode {
       mp3URL: item.id,
       image: PodImage(url: item.artUri),
       author: item.artist,
-      durationMillis: item.duration,
+      durationMillis: item.duration.inMilliseconds,
       subtitle: item.displaySubtitle,
     );
   }
@@ -195,7 +194,7 @@ class Episode {
       artist: p.title,
       displaySubtitle: this.subtitle,
       displayTitle: this.title,
-      duration: this.durationMillis,
+      duration: Duration(milliseconds: this.durationMillis),
       playable: true,
       album: this.title,
       extras: {"epi_id": this.id, "pod_id": this.podcastID},
