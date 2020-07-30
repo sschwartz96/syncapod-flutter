@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:syncapod/constants.dart';
 import 'package:syncapod/models/podcast.dart';
 import 'package:syncapod/pages/episodes.dart';
-import 'package:syncapod/providers/user.dart';
 import 'package:syncapod/widgets/podcast.dart';
 
 class SubscriptionsTab extends StatelessWidget {
@@ -68,8 +66,9 @@ class SubscriptionsTab extends StatelessWidget {
 
   Widget _page(BuildContext context) {
     // get the list of subs, loaded when the user was authorized
-    List<Podcast> subs =
-        Provider.of<UserProvider>(context, listen: false).getUserSubs();
+    // List<Podcast> subs =
+    // Provider.of<PodcastProvider>(context, listen: false).getSubs("asdf");
+    List<Podcast> subs = [];
     return Scaffold(
       body: Builder(
         builder: (context) {

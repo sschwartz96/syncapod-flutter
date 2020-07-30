@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/home.dart';
 import 'package:syncapod/pages/login.dart';
+import 'package:syncapod/protos/auth.pb.dart';
 import 'models/user.dart';
 import 'providers/user.dart';
 import 'providers/auth.dart';
@@ -86,19 +87,21 @@ class ShowPage extends StatelessWidget {
         // grab our storage to save and read data
         final storage = Provider.of<StorageProvider>(context, listen: false);
         // future builder is needed to check authorization status
-        return FutureBuilder<User>(
+        return FutureBuilder<AuthRes>(
           // future checks if we have a token and authorizes it with the server
           future: Provider.of<AuthProvider>(context, listen: false)
-              .isAuthorized(storage),
+              .authorize(storage),
           // builder is where we return our widget
-          builder: (context, AsyncSnapshot<User> snapshot) {
+          builder: (context, AsyncSnapshot<AuthRes> snapshot) {
             // if the app is still checking auth status
             if (snapshot.connectionState == ConnectionState.done) {
-              // our snapshot.data is true or false from isAuthorized()
-              if (snapshot.data != null) {
+              // if the data has session key and user object means we are authorized
+              if (snapshot.data.sessionKey.length > 0 &&
+                  snapshot.data.user != null) {
                 // make sure our UserProvider gets our user info
+                print('user is authorized!');
                 Provider.of<UserProvider>(context, listen: false)
-                    .setUser(snapshot.data);
+                    .setUser(snapshot.data.user);
                 return BottomNav();
               } else {
                 return LoginPage();

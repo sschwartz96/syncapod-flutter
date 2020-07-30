@@ -1,14 +1,11 @@
-import 'dart:convert' as json;
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:syncapod/models/user.dart';
-import 'network.dart';
+import 'package:package_info/package_info.dart';
+import 'package:syncapod/protos/auth.pb.dart';
+import 'package:syncapod/grpc_client.dart' as grpcClient;
 import 'storage.dart';
 
 class AuthProvider extends ChangeNotifier {
-  static const _baseURL = "https://syncapod.com/api/auth/";
-
-  Future<User> isAuthorized(StorageProvider storage) async {
+  Future<AuthRes> authorize(StorageProvider storage) async {
     // get access token
     final token = await storage.read(StorageProvider.key_access_token);
     final username = await storage.read(StorageProvider.key_username);
@@ -16,47 +13,41 @@ class AuthProvider extends ChangeNotifier {
       print('no token');
       return null;
     }
+
+    // create our request
+    final authReq = AuthReq()
+      ..username = username
+      ..sessionKey = token;
+
     // send off to server and return value
-    final url = _baseURL + 'authorize/';
-    final reqBody = json.jsonEncode({"token": token});
-    final response = await NetworkProvider.postJSON(url, token, reqBody);
-
-    final resBody = json.jsonDecode(utf8.decode(response.bodyBytes));
-
-    if (!resBody['valid'] || resBody['user']['username'] != username) {
-      print('this should never happen, token doesn\'t match saved username');
-      return null;
-    }
-
-    return User.fromMap(resBody['user']);
+    return grpcClient.authClient.authorize(authReq);
   }
 
   Future<bool> authenticate(
       StorageProvider storage, String username, String password) async {
-    final url = _baseURL + 'authenticate/';
-    final map = {"email": username, "password": password, "expires": false};
-    final reqBody = json.jsonEncode(map);
-    final response = await NetworkProvider.postJSON(url, '', reqBody);
-    final resBody = json.jsonDecode(response.body);
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final request = AuthReq()
+      ..username = username
+      ..password = password
+      ..userAgent = "flutterApp.v:" + packageInfo.version;
 
-    if (resBody['authenticated'] == true) {
-      storage.insert(StorageProvider.key_access_token, resBody['access_token']);
-      storage.insert(StorageProvider.key_username, resBody['user']['username']);
-      storage.insert(StorageProvider.key_email, resBody['user']['email']);
+    final res = await grpcClient.authClient.authenticate(request);
+
+    // succesfully logged in
+    if (res.user != null && res.sessionKey.length > 0) {
+      storage.insert(StorageProvider.key_email, res.user.email);
+      storage.insert(StorageProvider.key_username, res.user.username);
+      storage.insert(StorageProvider.key_access_token, res.sessionKey);
+      // to send update to consumer and to show the home page
       notifyListeners();
-      return true;
     }
-
-//    notifyListeners();
-    return false;
+    return res.success;
   }
 
   void logout(StorageProvider storage) async {
     final token = await storage.read(StorageProvider.key_access_token);
-    final url = _baseURL + "logout/";
-    print("sending token $token off to delete");
-    final response = await NetworkProvider.postJSON(url, token, '');
-    print("logout response: ${response.body}");
+
+    // TODO: send logout to the server
 
     await storage.delete(StorageProvider.key_access_token);
     storage.delete(StorageProvider.key_username);

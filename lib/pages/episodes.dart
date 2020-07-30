@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:syncapod/constants.dart';
-import 'package:syncapod/models/podcast.dart';
 import 'package:syncapod/pages/now_playing.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:syncapod/protos/podcast.pb.dart';
 
 class EpisodesListPage extends StatelessWidget {
   final Podcast _podcast;

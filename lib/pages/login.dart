@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:syncapod/protos/auth.pb.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/storage.dart';
 
@@ -175,31 +176,6 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       );
-  //  FlatButton(
-  //   color: Colors.grey.shade700,
-  //   onPressed: () {},
-  //   child: Container(
-  //     width: 140,
-  //     child: Row(
-  //       crossAxisAlignment: CrossAxisAlignment.center,
-  //       mainAxisAlignment: MainAxisAlignment.center,
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: <Widget>[
-  //         Text(
-  //           'Sign Up',
-  //           style: Theme.of(context)
-  //               .textTheme
-  //               .bodyText1
-  //               .apply(fontSizeDelta: 8.0),
-  //         ),
-  //         SizedBox(
-  //           width: 8,
-  //         ),
-  //         Icon(Icons.person_add)
-  //       ],
-  //     ),
-  //   ),
-  // );
 
   Widget loginButton(BuildContext context) => FlatButton(
         color: Theme.of(context).buttonColor,
@@ -233,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
     // show a loading dialog
     showDialog(
       context: context,
-      builder: (context) => FutureBuilder(
+      builder: (context) => FutureBuilder<bool>(
         future: authProvider.authenticate(
             storage, userController.text, passController.text),
         builder: (context, snapshot) {
@@ -242,6 +218,7 @@ class _LoginPageState extends State<LoginPage> {
             if (!snapshot.data) _state = LoginPageState.WRONG;
             // else means its correct and handled by AuthProvider
 
+            // suppose to remove keyboard
             Navigator.maybePop(context);
             return Container();
           } else {

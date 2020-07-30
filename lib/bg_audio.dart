@@ -80,7 +80,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     userEpi.then((value) {
       print('val of userEpi: $value');
       if (value?.offset != null) {
-        _seek(Duration(milliseconds: value.offset))
+        _seek(Duration(milliseconds: value.offset.toInt()))
             .then((value) => _player.play());
       } else {
         _player.play();
@@ -202,6 +202,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     print('audio focus gained: $interruption');
     _player.play();
     _player.setVolume(100);
+    _interrupted = false;
   }
 
   @override
@@ -260,7 +261,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     print(
         'seding update offset with token: $_token, position:${_getPosition()}');
     _podcastProvider.updateUserEpisodeOffset(_token, item.extras['epi_id'],
-        item.extras['pod_id'], _getPosition().inMilliseconds);
+        item.extras['pod_id'], _getPosition().inMilliseconds, false);
   }
 
   /// _seek seeks to the specified duration

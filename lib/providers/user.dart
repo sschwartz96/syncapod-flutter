@@ -1,11 +1,12 @@
-import 'package:syncapod/models/podcast.dart';
-import 'package:syncapod/models/user.dart';
+import 'package:syncapod/protos/user.pb.dart';
+import 'package:syncapod/protos/google/protobuf/timestamp.pb.dart';
 
 class UserProvider {
   User _user;
 
   String getUsername() => _user == null ? '' : _user.username;
   String getUserEmail() => _user == null ? '' : _user.email;
-  List<Podcast> getUserSubs() => _user == null ? '' : _user.subs;
+  Timestamp getUserDOB() => _user == null ? '' : _user.dOB;
+
   void setUser(User user) => this._user = user;
 }

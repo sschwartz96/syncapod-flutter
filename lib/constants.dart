@@ -7,3 +7,6 @@ const NavSubEpiDetail = '/epi/detail';
 
 const darkGrey = Color(0xFF121212);
 const purple = Color(0xFF4527A0);
+
+const grpcServerPort = 50051;
+const grpcServerName = "syncapod.com";
