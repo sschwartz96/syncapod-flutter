@@ -4,16 +4,27 @@ import 'protos/podcast.pbgrpc.dart';
 
 import 'constants.dart';
 
-final channel = ClientChannel(grpcServerName,
-    port: grpcServerPort,
-    options: const ChannelOptions(credentials: ChannelCredentials.secure(password: token)));
-
-final authClient = AuthClient(
-  channel,
-  options: CallOptions(timeout: Duration(seconds: 30)),
+final channel = ClientChannel(
+  grpcServerName,
+  port: grpcServerPort,
+  options: const ChannelOptions(
+    credentials: ChannelCredentials.secure(),
+  ),
 );
 
-final podClient = PodcastServiceClient(
-  channel,
-  options: CallOptions(timeout: Duration(seconds: 30));
-);
+AuthClient createAuthClient() => AuthClient(
+      channel,
+      options: CallOptions(timeout: Duration(seconds: 10)),
+    );
+
+PodClient createPodClient(String token) {
+  final metadata = Map<String, String>();
+  metadata.putIfAbsent("token", () => token);
+  return PodClient(
+    channel,
+    options: CallOptions(
+      timeout: Duration(seconds: 10),
+      metadata: metadata,
+    ),
+  );
+}

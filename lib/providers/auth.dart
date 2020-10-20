@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:package_info/package_info.dart';
 import 'package:syncapod/protos/auth.pb.dart';
 import 'package:syncapod/grpc_client.dart' as grpcClient;
+import 'package:syncapod/protos/auth.pbgrpc.dart';
 import 'storage.dart';
 
 class AuthProvider extends ChangeNotifier {
+  AuthProvider() {
+    _authClient = grpcClient.createAuthClient();
+  }
+  AuthClient _authClient;
+
   Future<AuthRes> authorize(StorageProvider storage) async {
     // get access token
     final token = await storage.read(StorageProvider.key_access_token);
@@ -20,7 +26,7 @@ class AuthProvider extends ChangeNotifier {
       ..sessionKey = token;
 
     // send off to server and return value
-    return grpcClient.authClient.authorize(authReq);
+    return _authClient.authorize(authReq);
   }
 
   Future<bool> authenticate(
@@ -31,7 +37,7 @@ class AuthProvider extends ChangeNotifier {
       ..password = password
       ..userAgent = "flutterApp.v:" + packageInfo.version;
 
-    final res = await grpcClient.authClient.authenticate(request);
+    final res = await _authClient.authenticate(request);
 
     // succesfully logged in
     if (res.user != null && res.sessionKey.length > 0) {
@@ -47,7 +53,9 @@ class AuthProvider extends ChangeNotifier {
   void logout(StorageProvider storage) async {
     final token = await storage.read(StorageProvider.key_access_token);
 
-    // TODO: send logout to the server
+    _authClient.logout(AuthReq()..sessionKey = token).catchError((obj) {
+      print("could not logout: $obj");
+    });
 
     await storage.delete(StorageProvider.key_access_token);
     storage.delete(StorageProvider.key_username);

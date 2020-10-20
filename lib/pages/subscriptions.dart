@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:syncapod/constants.dart';
-import 'package:syncapod/models/podcast.dart';
 import 'package:syncapod/pages/episodes.dart';
+import 'package:syncapod/protos/podcast.pb.dart';
+import 'package:syncapod/protos/user.pb.dart';
+import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/widgets/podcast.dart';
 
 class SubscriptionsTab extends StatelessWidget {
@@ -66,33 +69,47 @@ class SubscriptionsTab extends StatelessWidget {
 
   Widget _page(BuildContext context) {
     // get the list of subs, loaded when the user was authorized
-    // List<Podcast> subs =
-    // Provider.of<PodcastProvider>(context, listen: false).getSubs("asdf");
-    List<Podcast> subs = [];
-    return Scaffold(
-      body: Builder(
-        builder: (context) {
-          return subs == null || subs.length == 0
-              ? Text(
-                  'No Subscriptions',
-                  style: TextStyle(
-                    fontSize: 40,
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: subs.length,
-                  itemBuilder: (context, index) => InkWell(
-                    onTap: () {
-                      return Navigator.of(context)
-                          .pushNamed(NavSubEpi, arguments: subs[index]);
-                    },
-                    child: PodcastTile(
-                      subs[index],
-                    ),
-                  ),
-                );
-        },
-      ),
+    return FutureBuilder<Subscriptions>(
+      future: Provider.of<PodcastProvider>(context, listen: false).getSubs(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          final subs = snapshot.data.subscriptions;
+          return Scaffold(
+            body: Builder(
+              builder: (context) {
+                return subs == null || subs.length == 0
+                    ? Text(
+                        'No Subscriptions',
+                        style: TextStyle(
+                          fontSize: 40,
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: subs.length,
+                        itemBuilder: (context, index) => InkWell(
+                          onTap: () {
+                            return Navigator.of(context)
+                                .pushNamed(NavSubEpi, arguments: subs[index]);
+                          },
+                          child: FutureBuilder<Podcast>(
+                            future: Provider.of<PodcastProvider>(context,
+                                    listen: false)
+                                .getPodcast(subs[index].podcastID),
+                            builder: (context, podSnapshot) {
+                              if (podSnapshot.connectionState ==
+                                  ConnectionState.done) {
+                                return PodcastTile(podSnapshot.data);
+                              }
+                              return CircularProgressIndicator();
+                            },
+                          ),
+                        ),
+                      );
+              },
+            ),
+          );
+        }
+      },
     );
   }
 }

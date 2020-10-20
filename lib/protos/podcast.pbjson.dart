@@ -66,18 +66,16 @@ const Episode$json = const {
 const Request$json = const {
   '1': 'Request',
   '2': const [
-    const {'1': 'token', '3': 1, '4': 1, '5': 9, '10': 'token'},
     const {'1': 'podcastID', '3': 2, '4': 1, '5': 11, '6': '.protos.ObjectID', '10': 'podcastID'},
     const {'1': 'episodeID', '3': 3, '4': 1, '5': 11, '6': '.protos.ObjectID', '10': 'episodeID'},
-    const {'1': 'start', '3': 4, '4': 1, '5': 5, '10': 'start'},
-    const {'1': 'end', '3': 5, '4': 1, '5': 5, '10': 'end'},
+    const {'1': 'start', '3': 4, '4': 1, '5': 3, '10': 'start'},
+    const {'1': 'end', '3': 5, '4': 1, '5': 3, '10': 'end'},
   ],
 };
 
 const UserEpisodeReq$json = const {
   '1': 'UserEpisodeReq',
   '2': const [
-    const {'1': 'token', '3': 1, '4': 1, '5': 9, '10': 'token'},
     const {'1': 'podcastID', '3': 2, '4': 1, '5': 11, '6': '.protos.ObjectID', '10': 'podcastID'},
     const {'1': 'episodeID', '3': 3, '4': 1, '5': 11, '6': '.protos.ObjectID', '10': 'episodeID'},
     const {'1': 'offset', '3': 4, '4': 1, '5': 3, '10': 'offset'},

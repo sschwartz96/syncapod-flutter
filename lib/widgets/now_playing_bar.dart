@@ -6,6 +6,7 @@ import 'package:syncapod/bg_audio.dart' as bgAudio;
 import 'package:syncapod/pages/now_playing.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
+import 'package:syncapod/util.dart';
 
 class NowPlayingBar extends StatefulWidget {
   @override
@@ -81,12 +82,11 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
               ),
             );
           }
-        } else {
-          if (!audioServiceStarting) {
-            _getLatestPlayed(context);
-          }
-          return Container();
         }
+        if (!audioServiceStarting) {
+          _getLatestPlayed(context);
+        }
+        return Container();
       },
     );
   }
@@ -106,8 +106,9 @@ class _NowPlayingBarState extends State<NowPlayingBar> {
     if (latestPlayed == null) return;
 
     // convert episode to media item and add to queue
-    var mediaItem = latestPlayed.episode.toMediaItem(latestPlayed.podcast);
-    mediaItem.extras['offset'] = latestPlayed.offset;
+    var mediaItem =
+        episodeToMediaItem(latestPlayed.episode, latestPlayed.podcast);
+    mediaItem.extras['offset'] = latestPlayed.millis.toInt();
 
     // start the audio service if neccessary
     if (!AudioService.running) {

@@ -2,21 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:fixnum/fixnum.dart';
 
 import 'package:syncapod/protos/podcast.pb.dart';
+import 'package:syncapod/protos/podcast.pbgrpc.dart';
 import 'package:syncapod/protos/user.pb.dart';
 import 'package:syncapod/protos/objectID.pb.dart';
 import 'package:syncapod/grpc_client.dart' as grpcClient;
 
 class PodcastProvider extends ChangeNotifier {
-  // final String _baseURL = "https://syncapod.com/api/podcast/";
+  PodClient _podClient;
+
+  PodcastProvider(String token) {
+    _podClient = grpcClient.createPodClient(token);
+  }
+
+  void setToken(String token) {
+    _podClient = grpcClient.createPodClient(token);
+  }
 
   Future<Episodes> getEpisodes(
       String token, ObjectID podID, int start, int end) {
     final req = Request()
-      ..token = token
       ..podcastID = podID
-      ..start = start
-      ..end = end;
-    return grpcClient.podClient.getEpisodes(req);
+      ..start = Int64(start)
+      ..end = Int64(end);
+    return _podClient.getEpisodes(req);
   }
 
   // Future<List<Episode>> getEpisodes(
@@ -36,14 +44,12 @@ class PodcastProvider extends ChangeNotifier {
   //       .toList();
   // }
 
-  Future<UserEpisode> getUserEpisode(
-      String token, String epiID, String podID) async {
+  Future<UserEpisode> getUserEpisode(String epiID, String podID) async {
     final req = Request()
-      ..token = token
       ..episodeID = (ObjectID()..hex = epiID)
       ..podcastID = (ObjectID()..hex = podID);
 
-    return grpcClient.podClient.getUserEpisode(req);
+    return _podClient.getUserEpisode(req);
   }
   // Future<UserEpisode> getUserEpisode(
   //     String token, String epiID, String podID) async {
@@ -64,15 +70,14 @@ class PodcastProvider extends ChangeNotifier {
   // }
 
   Future<void> updateUserEpisodeOffset(
-      String token, String epiID, String podID, int offset, bool played) async {
+      String epiID, String podID, int offset, bool played) async {
     final userEpiReq = UserEpisodeReq()
-      ..token = token
       ..episodeID = (ObjectID()..hex = epiID)
       ..podcastID = (ObjectID()..hex = podID)
       ..offset = Int64(offset)
       ..played = played;
 
-    return grpcClient.podClient.updateUserEpisode(userEpiReq);
+    return _podClient.updateUserEpisode(userEpiReq);
   }
 
   // Future<void> updateUserEpisodeOffset(
@@ -90,8 +95,7 @@ class PodcastProvider extends ChangeNotifier {
   // }
 
   Future<LastPlayedRes> getLatestPlayed(String token) async {
-    final req = Request()..token = token;
-    return grpcClient.podClient.getUserLastPlayed(req);
+    return _podClient.getUserLastPlayed(Request());
   }
   // Future<LatestPlayed> getLatestPlayed(String token) async {
   //   final url = _baseURL + 'episodes/latest';
@@ -100,9 +104,12 @@ class PodcastProvider extends ChangeNotifier {
   //   return LatestPlayed.fromJson(decoded);
   // }
 
-  Future<Subscriptions> getSubs(String token) async {
-    final req = Request()..token = token;
-    return grpcClient.podClient.getSubscriptions(req);
+  Future<Subscriptions> getSubs() async {
+    return _podClient.getSubscriptions(Request());
+  }
+
+  Future<Podcast> getPodcast(ObjectID podID) async {
+    return _podClient.getPodcast(Request()..podcastID = podID);
   }
   // Future<List<Podcast>> getSubs(String token) async {
 

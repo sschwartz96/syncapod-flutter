@@ -86,6 +86,7 @@ class AuthRes extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('AuthRes', package: const $pb.PackageName('protos'), createEmptyInstance: create)
     ..aOB(1, 'success')
     ..aOS(2, 'sessionKey', protoName: 'sessionKey')
+    ..aOS(3, 'message')
     ..aOM<$2.User>(15, 'user', subBuilder: $2.User.create)
     ..hasRequiredFields = false
   ;
@@ -123,15 +124,24 @@ class AuthRes extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearSessionKey() => clearField(2);
 
+  @$pb.TagNumber(3)
+  $core.String get message => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set message($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasMessage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMessage() => clearField(3);
+
   @$pb.TagNumber(15)
-  $2.User get user => $_getN(2);
+  $2.User get user => $_getN(3);
   @$pb.TagNumber(15)
   set user($2.User v) { setField(15, v); }
   @$pb.TagNumber(15)
-  $core.bool hasUser() => $_has(2);
+  $core.bool hasUser() => $_has(3);
   @$pb.TagNumber(15)
   void clearUser() => clearField(15);
   @$pb.TagNumber(15)
-  $2.User ensureUser() => $_ensure(2);
+  $2.User ensureUser() => $_ensure(3);
 }
 

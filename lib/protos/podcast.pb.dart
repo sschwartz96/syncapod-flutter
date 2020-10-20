@@ -432,11 +432,10 @@ class Episode extends $pb.GeneratedMessage {
 
 class Request extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('Request', package: const $pb.PackageName('protos'), createEmptyInstance: create)
-    ..aOS(1, 'token')
     ..aOM<$3.ObjectID>(2, 'podcastID', protoName: 'podcastID', subBuilder: $3.ObjectID.create)
     ..aOM<$3.ObjectID>(3, 'episodeID', protoName: 'episodeID', subBuilder: $3.ObjectID.create)
-    ..a<$core.int>(4, 'start', $pb.PbFieldType.O3)
-    ..a<$core.int>(5, 'end', $pb.PbFieldType.O3)
+    ..aInt64(4, 'start')
+    ..aInt64(5, 'end')
     ..hasRequiredFields = false
   ;
 
@@ -455,59 +454,49 @@ class Request extends $pb.GeneratedMessage {
   static Request getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Request>(create);
   static Request _defaultInstance;
 
-  @$pb.TagNumber(1)
-  $core.String get token => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set token($core.String v) { $_setString(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasToken() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearToken() => clearField(1);
-
   @$pb.TagNumber(2)
-  $3.ObjectID get podcastID => $_getN(1);
+  $3.ObjectID get podcastID => $_getN(0);
   @$pb.TagNumber(2)
   set podcastID($3.ObjectID v) { setField(2, v); }
   @$pb.TagNumber(2)
-  $core.bool hasPodcastID() => $_has(1);
+  $core.bool hasPodcastID() => $_has(0);
   @$pb.TagNumber(2)
   void clearPodcastID() => clearField(2);
   @$pb.TagNumber(2)
-  $3.ObjectID ensurePodcastID() => $_ensure(1);
+  $3.ObjectID ensurePodcastID() => $_ensure(0);
 
   @$pb.TagNumber(3)
-  $3.ObjectID get episodeID => $_getN(2);
+  $3.ObjectID get episodeID => $_getN(1);
   @$pb.TagNumber(3)
   set episodeID($3.ObjectID v) { setField(3, v); }
   @$pb.TagNumber(3)
-  $core.bool hasEpisodeID() => $_has(2);
+  $core.bool hasEpisodeID() => $_has(1);
   @$pb.TagNumber(3)
   void clearEpisodeID() => clearField(3);
   @$pb.TagNumber(3)
-  $3.ObjectID ensureEpisodeID() => $_ensure(2);
+  $3.ObjectID ensureEpisodeID() => $_ensure(1);
 
   @$pb.TagNumber(4)
-  $core.int get start => $_getIZ(3);
+  $fixnum.Int64 get start => $_getI64(2);
   @$pb.TagNumber(4)
-  set start($core.int v) { $_setSignedInt32(3, v); }
+  set start($fixnum.Int64 v) { $_setInt64(2, v); }
   @$pb.TagNumber(4)
-  $core.bool hasStart() => $_has(3);
+  $core.bool hasStart() => $_has(2);
   @$pb.TagNumber(4)
   void clearStart() => clearField(4);
 
   @$pb.TagNumber(5)
-  $core.int get end => $_getIZ(4);
+  $fixnum.Int64 get end => $_getI64(3);
   @$pb.TagNumber(5)
-  set end($core.int v) { $_setSignedInt32(4, v); }
+  set end($fixnum.Int64 v) { $_setInt64(3, v); }
   @$pb.TagNumber(5)
-  $core.bool hasEnd() => $_has(4);
+  $core.bool hasEnd() => $_has(3);
   @$pb.TagNumber(5)
   void clearEnd() => clearField(5);
 }
 
 class UserEpisodeReq extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo('UserEpisodeReq', package: const $pb.PackageName('protos'), createEmptyInstance: create)
-    ..aOS(1, 'token')
     ..aOM<$3.ObjectID>(2, 'podcastID', protoName: 'podcastID', subBuilder: $3.ObjectID.create)
     ..aOM<$3.ObjectID>(3, 'episodeID', protoName: 'episodeID', subBuilder: $3.ObjectID.create)
     ..aInt64(4, 'offset')
@@ -531,63 +520,54 @@ class UserEpisodeReq extends $pb.GeneratedMessage {
   static UserEpisodeReq getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UserEpisodeReq>(create);
   static UserEpisodeReq _defaultInstance;
 
-  @$pb.TagNumber(1)
-  $core.String get token => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set token($core.String v) { $_setString(0, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasToken() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearToken() => clearField(1);
-
   @$pb.TagNumber(2)
-  $3.ObjectID get podcastID => $_getN(1);
+  $3.ObjectID get podcastID => $_getN(0);
   @$pb.TagNumber(2)
   set podcastID($3.ObjectID v) { setField(2, v); }
   @$pb.TagNumber(2)
-  $core.bool hasPodcastID() => $_has(1);
+  $core.bool hasPodcastID() => $_has(0);
   @$pb.TagNumber(2)
   void clearPodcastID() => clearField(2);
   @$pb.TagNumber(2)
-  $3.ObjectID ensurePodcastID() => $_ensure(1);
+  $3.ObjectID ensurePodcastID() => $_ensure(0);
 
   @$pb.TagNumber(3)
-  $3.ObjectID get episodeID => $_getN(2);
+  $3.ObjectID get episodeID => $_getN(1);
   @$pb.TagNumber(3)
   set episodeID($3.ObjectID v) { setField(3, v); }
   @$pb.TagNumber(3)
-  $core.bool hasEpisodeID() => $_has(2);
+  $core.bool hasEpisodeID() => $_has(1);
   @$pb.TagNumber(3)
   void clearEpisodeID() => clearField(3);
   @$pb.TagNumber(3)
-  $3.ObjectID ensureEpisodeID() => $_ensure(2);
+  $3.ObjectID ensureEpisodeID() => $_ensure(1);
 
   @$pb.TagNumber(4)
-  $fixnum.Int64 get offset => $_getI64(3);
+  $fixnum.Int64 get offset => $_getI64(2);
   @$pb.TagNumber(4)
-  set offset($fixnum.Int64 v) { $_setInt64(3, v); }
+  set offset($fixnum.Int64 v) { $_setInt64(2, v); }
   @$pb.TagNumber(4)
-  $core.bool hasOffset() => $_has(3);
+  $core.bool hasOffset() => $_has(2);
   @$pb.TagNumber(4)
   void clearOffset() => clearField(4);
 
   @$pb.TagNumber(5)
-  $4.Timestamp get lastSeen => $_getN(4);
+  $4.Timestamp get lastSeen => $_getN(3);
   @$pb.TagNumber(5)
   set lastSeen($4.Timestamp v) { setField(5, v); }
   @$pb.TagNumber(5)
-  $core.bool hasLastSeen() => $_has(4);
+  $core.bool hasLastSeen() => $_has(3);
   @$pb.TagNumber(5)
   void clearLastSeen() => clearField(5);
   @$pb.TagNumber(5)
-  $4.Timestamp ensureLastSeen() => $_ensure(4);
+  $4.Timestamp ensureLastSeen() => $_ensure(3);
 
   @$pb.TagNumber(6)
-  $core.bool get played => $_getBF(5);
+  $core.bool get played => $_getBF(4);
   @$pb.TagNumber(6)
-  set played($core.bool v) { $_setBool(5, v); }
+  set played($core.bool v) { $_setBool(4, v); }
   @$pb.TagNumber(6)
-  $core.bool hasPlayed() => $_has(5);
+  $core.bool hasPlayed() => $_has(4);
   @$pb.TagNumber(6)
   void clearPlayed() => clearField(6);
 }

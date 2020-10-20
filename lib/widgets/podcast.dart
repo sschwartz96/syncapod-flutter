@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
-import 'package:syncapod/models/podcast.dart';
+import 'package:flutter/widgets.dart' as widgets;
+import 'package:syncapod/protos/podcast.pb.dart';
 
 class PodcastTile extends StatelessWidget {
   final Podcast _podcast;
@@ -16,7 +16,7 @@ class PodcastTile extends StatelessWidget {
       height: 100,
       child: Row(
         children: <Widget>[
-          Image.network(
+          widgets.Image.network(
             _podcast.image.url,
             width: 100,
             height: 100,

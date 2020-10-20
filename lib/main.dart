@@ -5,11 +5,10 @@ import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/home.dart';
 import 'package:syncapod/pages/login.dart';
 import 'package:syncapod/protos/auth.pb.dart';
-import 'models/user.dart';
-import 'providers/user.dart';
-import 'providers/auth.dart';
-import 'providers/podcast.dart';
-import 'providers/storage.dart';
+import 'package:syncapod/providers/auth.dart';
+import 'package:syncapod/providers/podcast.dart';
+import 'package:syncapod/providers/storage.dart';
+import 'package:syncapod/providers/user.dart';
 
 void main() => runApp(Syncapod());
 
@@ -29,7 +28,7 @@ class Syncapod extends StatelessWidget {
             create: (context) => AuthProvider(),
           ),
           ChangeNotifierProvider<PodcastProvider>(
-            create: (context) => PodcastProvider(),
+            create: (context) => PodcastProvider("no_token_yet"),
           ),
         ],
         child: MaterialApp(
@@ -91,23 +90,20 @@ class ShowPage extends StatelessWidget {
           // future checks if we have a token and authorizes it with the server
           future: Provider.of<AuthProvider>(context, listen: false)
               .authorize(storage),
-          // builder is where we return our widget
+          // builder returns widget either BottomNav(homepage) or LoginPage
           builder: (context, AsyncSnapshot<AuthRes> snapshot) {
-            // if the app is still checking auth status
             if (snapshot.connectionState == ConnectionState.done) {
               // if the data has session key and user object means we are authorized
-              if (snapshot.data.sessionKey.length > 0 &&
+              if (snapshot.hasData &&
+                  snapshot.data.sessionKey.length > 0 &&
                   snapshot.data.user != null) {
-                // make sure our UserProvider gets our user info
-                print('user is authorized!');
-                Provider.of<UserProvider>(context, listen: false)
-                    .setUser(snapshot.data.user);
+                // make sure we setup our providers
+                _setupAuthorizedProviders(context, snapshot.data);
                 return BottomNav();
               } else {
                 return LoginPage();
               }
             } else {
-              // show circular loading
               return Scaffold(
                 body: Center(
                   child: Container(
@@ -123,4 +119,10 @@ class ShowPage extends StatelessWidget {
       },
     );
   }
+}
+
+void _setupAuthorizedProviders(BuildContext context, AuthRes authRes) {
+  Provider.of<UserProvider>(context, listen: false).setUser(authRes.user);
+  Provider.of<PodcastProvider>(context, listen: false)
+      .setToken(authRes.sessionKey);
 }

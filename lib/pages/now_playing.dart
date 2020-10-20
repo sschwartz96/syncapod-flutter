@@ -2,14 +2,15 @@ import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' as widget;
 import 'package:marquee/marquee.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:provider/provider.dart';
-
 import 'package:syncapod/bg_audio.dart';
 import 'package:syncapod/constants.dart';
-import 'package:syncapod/models/podcast.dart';
+import 'package:syncapod/protos/podcast.pb.dart';
 import 'package:syncapod/providers/storage.dart';
+import 'package:syncapod/util.dart';
 import 'package:syncapod/widgets/playback_button.dart';
 import 'package:syncapod/widgets/seek_bar.dart';
 
@@ -27,10 +28,10 @@ enum Status { StartingAudio, ToBePlayed, Playing, Paused }
 class _NowPlayingPageState extends State<NowPlayingPage> {
   Podcast _podcast;
   Episode _episode;
-  IconData playPauseIcon = null;
+  IconData playPauseIcon;
   Status _currentStatus = Status.ToBePlayed;
-  String title, _imgUrl;
-  Image _curImage;
+  String title;
+  widget.Image _curImage;
   Color _curBackground = Colors.grey.shade900;
   Color _curVibrant = Colors.deepPurple;
   Color _curMuted = Colors.grey;
@@ -55,14 +56,14 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
               AudioProcessingState.ready) &&
           _episode == null) {
         _currentStatus = Status.Playing;
-        _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
+        _episode = episodeFromMediaItem(AudioService.currentMediaItem);
       } else
       // Initiate playback start if we are in such state
       if (_currentStatus == Status.ToBePlayed) {
         // only reason to be here is because coming from latestPlayed
         if (AudioService.currentMediaItem != null && _episode == null) {
           _currentStatus = Status.Playing;
-          _episode = Episode.fromMediaItem(AudioService.currentMediaItem);
+          _episode = episodeFromMediaItem(AudioService.currentMediaItem);
         } else {
           _playEpisode(context);
         }
@@ -161,7 +162,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
       stream: AudioService.playbackStateStream,
       builder: (context, snapshot) {
         final fullState = snapshot.data;
-        final state = fullState?.processingState;
+        //final state = fullState?.processingState;
         final duration = AudioService.currentMediaItem != null
             ? AudioService.currentMediaItem.duration
             : Duration.zero;
@@ -175,7 +176,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             Center(
-              child: _curImage = Image.network(
+              child: _curImage = widget.Image.network(
                 _episode.image.url,
                 alignment: Alignment.center,
                 fit: BoxFit.cover,
@@ -341,7 +342,7 @@ class _NowPlayingPageState extends State<NowPlayingPage> {
 
   void _playEpisode(BuildContext context) {
     // transform episode to [MediaItem]
-    final mediaItem = _episode.toMediaItem(_podcast);
+    final mediaItem = episodeToMediaItem(_episode, _podcast);
 
     // play the media item with the audio service
     AudioService.playMediaItem(mediaItem);

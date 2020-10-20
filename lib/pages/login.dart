@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:syncapod/protos/auth.pb.dart';
 import 'package:syncapod/providers/auth.dart';
 import 'package:syncapod/providers/storage.dart';
 
@@ -98,13 +95,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _loginText(BuildContext context) => Container(
-        margin: EdgeInsets.only(bottom: 20),
-        child: Text(
-          'Please sign in to continue',
-          style: Theme.of(context).textTheme.headline6,
-        ),
-      );
+  // Widget _loginText(BuildContext context) => Container(
+  //       margin: EdgeInsets.only(bottom: 20),
+  //       child: Text(
+  //         'Please sign in to continue',
+  //         style: Theme.of(context).textTheme.headline6,
+  //       ),
+  //     );
 
   Widget loginError(BuildContext context) {
     if (_state == LoginPageState.WRONG)

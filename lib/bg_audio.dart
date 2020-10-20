@@ -8,7 +8,6 @@ import 'package:syncapod/providers/podcast.dart';
 
 class BackgroundAudio extends BackgroundAudioTask {
   PodcastProvider _podcastProvider;
-  String _token;
 
   AudioPlayer _player;
   final List<MediaItem> _queue = [];
@@ -17,12 +16,12 @@ class BackgroundAudio extends BackgroundAudioTask {
   List<double> _speedInc = [1.0, 1.2, 1.5, 1.7, 2.0, 0.7];
 
   // _interrupted keeps track if we lost focus
-  bool _interrupted = false;
+  //bool _interrupted = false;
 
   @override
   void onStart(Map<String, dynamic> params) {
     print('background on start');
-    _podcastProvider = PodcastProvider();
+    _podcastProvider = PodcastProvider("no_token_from_background_audio");
     _player = AudioPlayer();
     print('started audio player');
 
@@ -49,7 +48,7 @@ class BackgroundAudio extends BackgroundAudioTask {
   void onPlayMediaItem(MediaItem mediaItem) async {
     // need to first get the latest playback for user
     final userEpi = _podcastProvider.getUserEpisode(
-        _token, mediaItem.extras['epi_id'], mediaItem.extras['pod_id']);
+        mediaItem.extras['epi_id'], mediaItem.extras['pod_id']);
 
     Duration duration;
     // set the url, buffer, and play
@@ -107,7 +106,8 @@ class BackgroundAudio extends BackgroundAudioTask {
         break;
       case 'setToken':
         print('setting token in audio service: $arguments');
-        _token = arguments;
+        final token = arguments;
+        _podcastProvider = PodcastProvider(token);
         break;
     }
   }
@@ -185,7 +185,7 @@ class BackgroundAudio extends BackgroundAudioTask {
   void onAudioFocusLost(AudioInterruption interruption) {
     print('audio focus lost: $interruption');
 
-    if (_isPlaying()) _interrupted = true;
+    //if (_isPlaying()) _interrupted = true;
     switch (interruption) {
       case AudioInterruption.pause:
       case AudioInterruption.temporaryPause:
@@ -202,7 +202,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     print('audio focus gained: $interruption');
     _player.play();
     _player.setVolume(100);
-    _interrupted = false;
+    //_interrupted = false;
   }
 
   @override
@@ -226,7 +226,7 @@ class BackgroundAudio extends BackgroundAudioTask {
     _player.setUrl(item.id).then((value) {
       print("seeking: ${item.extras['offset']}");
       _seek(Duration(milliseconds: item.extras['offset'])).then((value) {
-        // a hack to otherwise player stays in a perpetual state of loading
+        // a hack, otherwise player stays in a perpetual state of loading
         // TODO: fix???
         _player.play();
         _player.pause();
@@ -258,9 +258,8 @@ class BackgroundAudio extends BackgroundAudioTask {
   void _pause() {
     _player.pause();
     MediaItem item = _queue[_qIndex];
-    print(
-        'seding update offset with token: $_token, position:${_getPosition()}');
-    _podcastProvider.updateUserEpisodeOffset(_token, item.extras['epi_id'],
+    print('seding update offset: position:${_getPosition()}');
+    _podcastProvider.updateUserEpisodeOffset(item.extras['epi_id'],
         item.extras['pod_id'], _getPosition().inMilliseconds, false);
   }
 
@@ -283,9 +282,9 @@ class BackgroundAudio extends BackgroundAudioTask {
     }
   }
 
-  bool _isPlaying() {
-    return _player.playbackState == AudioPlaybackState.playing;
-  }
+  // bool _isPlaying() {
+  //   return _player.playbackState == AudioPlaybackState.playing;
+  // }
 
   /// _nextSpeed changes the speed of the audio player to the next in the list
   /// [i] should be set to -1 if the index is not specified

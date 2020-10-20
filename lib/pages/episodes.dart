@@ -1,14 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' as widget;
 import 'package:flutter_html/flutter_html.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import 'package:syncapod/constants.dart';
 import 'package:syncapod/pages/now_playing.dart';
+import 'package:syncapod/protos/podcast.pb.dart';
 import 'package:syncapod/providers/podcast.dart';
 import 'package:syncapod/providers/storage.dart';
-import 'package:syncapod/protos/podcast.pb.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EpisodesListPage extends StatelessWidget {
   final Podcast _podcast;
@@ -19,14 +19,14 @@ class EpisodesListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Episode>>(
+    return FutureBuilder<Episodes>(
       future: getEpisodes(context),
       builder: (context, snapshot) => !snapshot.hasData
           ? CircularProgressIndicator()
           : ListView.builder(
-              itemCount: snapshot.data.length,
+              itemCount: snapshot.data.episodes.length,
               itemBuilder: (context, index) =>
-                  episode(context, snapshot.data[index]),
+                  episode(context, snapshot.data.episodes[index]),
             ),
     );
   }
@@ -63,7 +63,7 @@ class EpisodesListPage extends StatelessWidget {
         ),
       );
 
-  Future<List<Episode>> getEpisodes(BuildContext context) async {
+  Future<Episodes> getEpisodes(BuildContext context) async {
     final token = await Provider.of<StorageProvider>(context, listen: false)
         .read(StorageProvider.key_access_token);
     return Provider.of<PodcastProvider>(context, listen: false)
@@ -87,7 +87,7 @@ class EpisodeDetailPage extends StatelessWidget {
             ),
 
             // Episode specific image
-            Image.network(
+            widget.Image.network(
               episode.image.url,
               height: 220,
               width: 320,
@@ -104,7 +104,7 @@ class EpisodeDetailPage extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8),
               child: Html(
-                data: episode.getDescription() ?? episode.summary,
+                data: episode.description ?? episode.summary,
                 defaultTextStyle: TextStyle(fontSize: 16),
                 onLinkTap: (url) async {
                   bool open = false;
